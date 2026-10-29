@@ -2,6 +2,7 @@ import { app, BrowserWindow, WebContentsView, ipcMain, session, shell, Input } f
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { enableAdblock, blockedCount, isAdblockReady } from './adblock';
+import { setupJsonViewer } from './json-viewer';
 
 // Hauteur de la barre d'onglets + barre d'outils (doit correspondre à style.css)
 const TOOLBAR_HEIGHT = 84;
@@ -62,6 +63,7 @@ function createTab(url: string = START_PAGE) {
     sendState();
   });
   wc.on('before-input-event', handleShortcut);
+  setupJsonViewer(wc);
   // Les liens target="_blank" s'ouvrent dans un nouvel onglet
   wc.setWindowOpenHandler(({ url }) => {
     createTab(url);

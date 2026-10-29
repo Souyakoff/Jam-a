@@ -8,6 +8,7 @@ Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromiu
 
 - Onglets, barre d'adresse intelligente (adresse, `localhost:3000` ou recherche DuckDuckGo)
 - Bloqueur de pubs et de traqueurs intégré (EasyList + EasyPrivacy), avec compteur par onglet
+- Visionneuse JSON : les API et fichiers `.json` s'affichent en arbre coloré et dépliable
 - Outils de développement en un clic (`F12`)
 - Mode mobile pour tester le responsive (`Ctrl+Shift+M`)
 - Bouton pour vider le cache et les cookies du site ouvert
@@ -45,6 +46,7 @@ npm start
 src/
   main.ts      Processus principal : fenêtre, onglets, raccourcis
   adblock.ts   Bloqueur de pubs et de traqueurs
+  json-viewer.ts  Visionneuse JSON injectée dans les pages JSON
   preload.ts   Pont sécurisé entre l'interface et main.ts
   renderer.ts  Logique de l'interface (onglets, barre d'outils)
 public/
