@@ -1,0 +1,25 @@
+{
+  "name": "lumen-browser",
+  "version": "0.1.0",
+  "description": "Un navigateur open source, sans pub, pensé pour les devs et les débutants.",
+  "main": "dist/main.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "browser",
+    "electron",
+    "adblock",
+    "developer-tools"
+  ],
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.20.3"
+  }
+}

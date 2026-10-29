@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data:; style-src 'self'">
+  <title>Lumen</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="tabbar">
+    <div id="tabs"></div>
+    <button id="new-tab" class="icon" title="Nouvel onglet (Ctrl+T)">+</button>
+  </div>
+
+  <div id="toolbar">
+    <button id="back" class="icon" title="Précédent (Alt+←)">←</button>
+    <button id="forward" class="icon" title="Suivant (Alt+→)">→</button>
+    <button id="reload" class="icon" title="Recharger (Ctrl+R)">↻</button>
+    <button id="home" class="icon" title="Accueil">⌂</button>
+
+    <form id="address-form">
+      <input id="address" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Rechercher ou saisir une adresse (Ctrl+L)">
+    </form>
+
+    <span id="shield" title="Pubs et traqueurs bloqués sur cet onglet">🛡 <span id="blocked">0</span></span>
+    <button id="responsive" class="tool" title="Mode mobile (Ctrl+Shift+M)">📱</button>
+    <button id="clear" class="tool" title="Vider le cache et les cookies de ce site">🧹</button>
+    <button id="devtools" class="tool" title="Outils de développement (F12)">&lt;/&gt;</button>
+  </div>
+
+  <script src="../dist/renderer.js"></script>
+</body>
+</html>
