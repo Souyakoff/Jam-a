@@ -2,42 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src * data:">
   <title>Nouvel onglet</title>
-  <style>
-    :root { --bg: #1e1f24; --card: #2a2c33; --text: #e6e6eb; --dim: #9a9ca8; --accent: #7c9cff; }
-    body {
-      margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-      background: var(--bg); color: var(--text); font: 15px system-ui, "Segoe UI", sans-serif;
-    }
-    h1 { margin: 12vh 0 4px; font-size: 44px; letter-spacing: -1px; }
-    h1 span { color: var(--accent); }
-    .tagline { color: var(--dim); margin: 0 0 28px; }
-    form { width: min(600px, 90vw); }
-    input {
-      width: 100%; height: 48px; padding: 0 20px; border-radius: 24px; border: 1px solid #3a3d47;
-      background: var(--card); color: var(--text); font: inherit; font-size: 16px; outline: none;
-    }
-    input:focus { border-color: var(--accent); }
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
-      width: min(900px, 90vw); margin: 48px 0;
-    }
-    .card { background: var(--card); border-radius: 12px; padding: 18px 20px; }
-    .card h2 { font-size: 15px; margin: 0 0 10px; }
-    .card p, .card li { color: var(--dim); font-size: 13px; line-height: 1.6; margin: 0; }
-    .card ul { padding-left: 18px; margin: 0; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    kbd { background: #15161a; border-radius: 4px; padding: 1px 6px; font-size: 12px; color: var(--text); }
-  </style>
+  <link rel="stylesheet" href="pages.css">
 </head>
 <body>
-  <h1>Jam<span>&lt;a</span></h1>
+  <h1 class="logo">Jam<span>&lt;a</span></h1>
   <p class="tagline">Open source · Sans pub · Fait pour apprendre et coder</p>
 
-  <form action="https://duckduckgo.com/" method="get">
+  <form class="search" action="https://duckduckgo.com/" method="get">
     <input name="q" placeholder="Rechercher sur le web…" autofocus>
   </form>
+
+  <p class="tiles-title" id="bookmarks-title" hidden>⭐ Favoris</p>
+  <div class="tiles" id="bookmarks"></div>
+
+  <section class="recent" id="recent" hidden>
+    <h2>🕘 Récemment visités · <a href="library.html#historique">tout l’historique</a></h2>
+    <div id="recent-list"></div>
+  </section>
 
   <div class="grid">
     <div class="card">
@@ -45,7 +29,8 @@
       <ul>
         <li><kbd>Ctrl+T</kbd> nouvel onglet · <kbd>Ctrl+W</kbd> fermer</li>
         <li><kbd>Ctrl+L</kbd> barre d'adresse</li>
-        <li><kbd>Ctrl+Tab</kbd> onglet suivant</li>
+        <li><kbd>Ctrl+D</kbd> ajouter aux favoris</li>
+        <li><kbd>Ctrl+H</kbd> historique · <kbd>Ctrl+Shift+O</kbd> favoris</li>
         <li><kbd>F12</kbd> outils de développement</li>
         <li><kbd>Ctrl+Shift+M</kbd> mode mobile</li>
       </ul>
@@ -63,8 +48,12 @@
     </div>
     <div class="card">
       <h2>🛡 Vie privée</h2>
-      <p>Les pubs et les traqueurs sont bloqués par défaut. Aucune télémétrie : Jam&lt;a n’envoie rien sur toi.</p>
+      <p>Les pubs et les traqueurs sont bloqués par défaut. Aucune télémétrie : tes favoris et ton historique
+        restent sur ton ordinateur, Jam&lt;a n’envoie rien sur toi.</p>
     </div>
   </div>
+
+  <script src="../dist/pages/entry.js"></script>
+  <script src="../dist/pages/start.js"></script>
 </body>
 </html>

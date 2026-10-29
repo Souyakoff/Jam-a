@@ -3,17 +3,29 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { enableAdblock, blockedCount, isAdblockReady } from './adblock';
 import { setupJsonViewer } from './json-viewer';
+import * as library from './library';
 
 // Hauteur de la barre d'onglets + barre d'outils (doit correspondre à style.css)
 const TOOLBAR_HEIGHT = 84;
 const RESPONSIVE_WIDTH = 390;
 const SEARCH_URL = 'https://duckduckgo.com/?q=';
 const START_PAGE = pathToFileURL(path.join(__dirname, '../public/start.html')).toString();
+const LIBRARY_PAGE = pathToFileURL(path.join(__dirname, '../public/library.html')).toString();
+
+// Raccourcis tapables dans la barre d'adresse pour les pages internes
+const INTERNAL_ALIASES: Record<string, string> = {
+  'jama://bibliotheque': LIBRARY_PAGE,
+  'jama://favoris': `${LIBRARY_PAGE}#favoris`,
+  'jama://historique': `${LIBRARY_PAGE}#historique`,
+};
 
 interface Tab {
   id: number;
   view: WebContentsView;
   favicon: string | null;
+  // Les pages internes (accueil, bibliothèque) ont accès aux favoris et à l'historique,
+  // les sites web non : chaque type a sa propre vue, avec ou sans preload.
+  internal: boolean;
 }
 
 let win: BrowserWindow;
@@ -42,38 +54,95 @@ function createWindow() {
   win.webContents.once('did-finish-load', () => createTab());
 }
 
+function isInternal(url: string) {
+  const page = url.split('#')[0];
+  return page === START_PAGE || page === LIBRARY_PAGE;
+}
+
+// Ce qu'on affiche dans la barre d'adresse
+function displayUrl(url: string) {
+  if (url.split('#')[0] === START_PAGE) return '';
+  const alias = Object.keys(INTERNAL_ALIASES).find((k) => INTERNAL_ALIASES[k] === url);
+  return alias ?? (url.startsWith(LIBRARY_PAGE) ? 'jama://bibliotheque' : url);
+}
+
 // ---------- Onglets ----------
 
 function createTab(url: string = START_PAGE) {
-  const view = new WebContentsView({
-    webPreferences: { sandbox: true, contextIsolation: true },
-  });
-  const tab: Tab = { id: nextId++, view, favicon: null };
+  const internal = isInternal(url);
+  const tab: Tab = { id: nextId++, view: createView(internal), favicon: null, internal };
   tabs.set(tab.id, tab);
+  bindView(tab);
+  tab.view.webContents.loadURL(url);
+  win.contentView.addChildView(tab.view);
+  activateTab(tab.id);
+  return tab;
+}
 
-  const wc = view.webContents;
+function createView(internal: boolean) {
+  return new WebContentsView({
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      preload: internal ? path.join(__dirname, 'internal-preload.js') : undefined,
+    },
+  });
+}
+
+function bindView(tab: Tab) {
+  const wc = tab.view.webContents;
   const refresh = () => sendState();
-  wc.on('page-title-updated', refresh);
   wc.on('did-start-loading', refresh);
   wc.on('did-stop-loading', refresh);
-  wc.on('did-navigate', refresh);
   wc.on('did-navigate-in-page', refresh);
+  wc.on('did-navigate', (_e, url) => {
+    if (!tab.internal) library.addVisit(url, wc.getTitle(), null);
+    sendState();
+  });
+  wc.on('page-title-updated', (_e, title) => {
+    if (!tab.internal) library.updateVisit(wc.getURL(), { title });
+    sendState();
+  });
   wc.on('page-favicon-updated', (_e, favicons) => {
     tab.favicon = favicons[0] ?? null;
+    if (!tab.internal && tab.favicon) library.updateVisit(wc.getURL(), { favicon: tab.favicon });
     sendState();
   });
   wc.on('before-input-event', handleShortcut);
-  setupJsonViewer(wc);
+  // Un lien vers un site depuis une page interne (ou l'inverse) change de type de vue
+  wc.on('will-navigate', (event) => {
+    if (isInternal(event.url) !== tab.internal) {
+      event.preventDefault();
+      navigate(tab, event.url);
+    }
+  });
   // Les liens target="_blank" s'ouvrent dans un nouvel onglet
   wc.setWindowOpenHandler(({ url }) => {
     createTab(url);
     return { action: 'deny' };
   });
+  if (!tab.internal) setupJsonViewer(wc);
+}
 
-  wc.loadURL(url);
-  win.contentView.addChildView(view);
-  activateTab(tab.id);
-  return tab;
+function navigate(tab: Tab, url: string) {
+  const internal = isInternal(url);
+  if (internal === tab.internal) {
+    tab.view.webContents.loadURL(url);
+    return;
+  }
+  // On remplace la vue de l'onglet par une vue du bon type
+  const old = tab.view;
+  tab.view = createView(internal);
+  tab.internal = internal;
+  tab.favicon = null;
+  bindView(tab);
+  tab.view.webContents.loadURL(url);
+  win.contentView.addChildView(tab.view);
+  win.contentView.removeChildView(old);
+  old.webContents.close();
+  tab.view.setVisible(tab.id === activeId);
+  layout();
+  sendState();
 }
 
 function activateTab(id: number) {
@@ -137,12 +206,14 @@ function sendState() {
       return {
         id: t.id,
         title: wc.getTitle() || 'Nouvel onglet',
-        url: url === START_PAGE ? '' : url,
+        url: displayUrl(url),
         favicon: t.favicon,
         loading: wc.isLoading(),
         canGoBack: wc.navigationHistory.canGoBack(),
         canGoForward: wc.navigationHistory.canGoForward(),
         blocked: blockedCount(wc.id),
+        canBookmark: !t.internal && url !== '',
+        bookmarked: !t.internal && library.isBookmarked(url),
       };
     }),
   };
@@ -155,10 +226,18 @@ function sendState() {
 function toUrl(input: string): string {
   const text = input.trim();
   if (!text) return START_PAGE;
+  if (INTERNAL_ALIASES[text.toLowerCase()]) return INTERNAL_ALIASES[text.toLowerCase()];
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text) || text.startsWith('about:')) return text;
   if (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/.*)?$/i.test(text)) return `http://${text}`;
   if (/^[^\s]+\.[a-z]{2,}(:\d+)?(\/.*)?$/i.test(text)) return `https://${text}`;
   return SEARCH_URL + encodeURIComponent(text);
+}
+
+function toggleActiveBookmark() {
+  const tab = activeTab();
+  if (!tab || tab.internal) return;
+  const wc = tab.view.webContents;
+  library.toggleBookmark(wc.getURL(), wc.getTitle(), tab.favicon);
 }
 
 // ---------- Raccourcis clavier ----------
@@ -177,6 +256,9 @@ function handleShortcut(event: Electron.Event, input: Input) {
   else if ((ctrl && key === 'r') || key === 'f5') wc?.reload();
   else if (key === 'f12' || (ctrl && input.shift && key === 'i')) wc?.toggleDevTools();
   else if (ctrl && input.shift && key === 'm') toggleResponsive();
+  else if (ctrl && key === 'd') toggleActiveBookmark();
+  else if (ctrl && key === 'h') createTab(INTERNAL_ALIASES['jama://historique']);
+  else if (ctrl && input.shift && key === 'o') createTab(INTERNAL_ALIASES['jama://favoris']);
   else if (input.alt && key === 'arrowleft') wc?.navigationHistory.goBack();
   else if (input.alt && key === 'arrowright') wc?.navigationHistory.goForward();
   else handled = false;
@@ -192,15 +274,22 @@ function toggleResponsive() {
 
 // ---------- Communication avec l'interface ----------
 
+const goTo = (input: string) => {
+  const tab = activeTab();
+  if (tab) navigate(tab, toUrl(input));
+};
+
 ipcMain.on('tab:new', () => createTab());
 ipcMain.on('tab:close', (_e, id: number) => closeTab(id));
 ipcMain.on('tab:activate', (_e, id: number) => activateTab(id));
-ipcMain.on('nav:go', (_e, input: string) => activeTab()?.view.webContents.loadURL(toUrl(input)));
+ipcMain.on('nav:go', (_e, input: string) => goTo(input));
 ipcMain.on('nav:back', () => activeTab()?.view.webContents.navigationHistory.goBack());
 ipcMain.on('nav:forward', () => activeTab()?.view.webContents.navigationHistory.goForward());
 ipcMain.on('nav:reload', () => activeTab()?.view.webContents.reload());
 ipcMain.on('nav:stop', () => activeTab()?.view.webContents.stop());
-ipcMain.on('nav:home', () => activeTab()?.view.webContents.loadURL(START_PAGE));
+ipcMain.on('nav:home', () => goTo(''));
+ipcMain.on('bookmark:toggle', toggleActiveBookmark);
+ipcMain.on('library:show', () => createTab(INTERNAL_ALIASES['jama://favoris']));
 ipcMain.on('dev:devtools', () => activeTab()?.view.webContents.toggleDevTools());
 ipcMain.on('dev:responsive', toggleResponsive);
 ipcMain.on('dev:clear-site-data', async () => {
@@ -214,11 +303,28 @@ ipcMain.on('open-external', (_e, url: string) => {
   if (/^https?:\/\//.test(url)) shell.openExternal(url);
 });
 
+// ---------- Communication avec les pages internes ----------
+
+// Seules les pages internes peuvent lire ou modifier les favoris et l'historique
+const fromInternal = (e: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent) => isInternal(e.sender.getURL());
+
+ipcMain.handle('library:get', (e) => (fromInternal(e) ? library.getLibrary() : null));
+ipcMain.on('library:remove-bookmark', (e, url: string) => fromInternal(e) && library.removeBookmark(url));
+ipcMain.on('library:remove-visit', (e, time: number) => fromInternal(e) && library.removeVisit(time));
+ipcMain.on('library:clear-history', (e) => fromInternal(e) && library.clearHistory());
+
+library.onLibraryChange(() => {
+  for (const tab of tabs.values()) if (tab.internal) tab.view.webContents.send('library:changed');
+  sendState();
+});
+
 // ---------- Démarrage ----------
 
 app.whenReady().then(async () => {
+  library.loadLibrary(app.getPath('userData'));
   createWindow();
   await enableAdblock(session.defaultSession, app.getPath('userData'), sendState);
 });
 
+app.on('before-quit', () => library.flushLibrary());
 app.on('window-all-closed', () => app.quit());

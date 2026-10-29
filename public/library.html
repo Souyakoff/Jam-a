@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src * data:">
+  <title>Bibliothèque</title>
+  <link rel="stylesheet" href="pages.css">
+</head>
+<body>
+  <main class="library">
+    <h1>📚 Bibliothèque</h1>
+
+    <div class="library-bar">
+      <div class="sections">
+        <button data-section="favoris">⭐ Favoris</button>
+        <button data-section="historique">🕘 Historique</button>
+      </div>
+      <input id="search" type="search" placeholder="Rechercher…" autofocus>
+      <button id="clear-history" class="danger" hidden>Effacer l’historique</button>
+    </div>
+
+    <div id="list"></div>
+  </main>
+
+  <script src="../dist/pages/entry.js"></script>
+  <script src="../dist/pages/library.js"></script>
+</body>
+</html>

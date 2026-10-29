@@ -81,11 +81,11 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
   background: var(--bg-tab-active);
 }
 
-#address-form { flex: 1; }
+#address-form { flex: 1; position: relative; }
 #address {
   width: 100%;
   height: 32px;
-  padding: 0 12px;
+  padding: 0 36px 0 12px;
   border: 1px solid transparent;
   border-radius: 16px;
   background: var(--bg-input);
@@ -95,6 +95,20 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
   outline: none;
 }
 #address:focus { border-color: var(--accent); }
+
+/* Étoile des favoris, dans la barre d'adresse */
+#bookmark {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  border-radius: 13px;
+  color: var(--text-dim);
+}
+#bookmark.on { color: #ffd166; }
+#bookmark[hidden] { display: none; }
 
 #shield { padding: 0 8px; color: var(--success); white-space: nowrap; }
 #shield.off { color: var(--text-dim); }

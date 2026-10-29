@@ -10,6 +10,8 @@ interface TabState {
   canGoBack: boolean;
   canGoForward: boolean;
   blocked: number;
+  canBookmark: boolean;
+  bookmarked: boolean;
 }
 
 interface BrowserState {
@@ -29,6 +31,8 @@ declare const jama: {
   reload(): void;
   stop(): void;
   home(): void;
+  toggleBookmark(): void;
+  showLibrary(): void;
   toggleDevTools(): void;
   toggleResponsive(): void;
   clearSiteData(): void;
@@ -55,6 +59,12 @@ function render(state: BrowserState) {
   forwardBtn.disabled = !current.canGoForward;
   reloadBtn.textContent = current.loading ? '✕' : '↻';
   reloadBtn.title = current.loading ? 'Arrêter' : 'Recharger (Ctrl+R)';
+
+  const star = $<HTMLButtonElement>('bookmark');
+  star.hidden = !current.canBookmark;
+  star.textContent = current.bookmarked ? '★' : '☆';
+  star.classList.toggle('on', current.bookmarked);
+  star.title = current.bookmarked ? 'Retirer des favoris (Ctrl+D)' : 'Ajouter aux favoris (Ctrl+D)';
 
   $('blocked').textContent = String(current.blocked);
   $('shield').classList.toggle('off', !state.adblock);
@@ -102,6 +112,8 @@ backBtn.onclick = () => jama.back();
 forwardBtn.onclick = () => jama.forward();
 reloadBtn.onclick = () => (current?.loading ? jama.stop() : jama.reload());
 $('home').onclick = () => jama.home();
+$('bookmark').onclick = () => jama.toggleBookmark();
+$('library').onclick = () => jama.showLibrary();
 $('devtools').onclick = () => jama.toggleDevTools();
 $('responsive').onclick = () => jama.toggleResponsive();
 $('clear').onclick = () => jama.clearSiteData();
