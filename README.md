@@ -1,8 +1,8 @@
-# Lumen
+# Jam&lt;a
 
 Un navigateur web **open source**, **sans pub** et **sans télémétrie**, pensé pour les développeurs et les débutants.
 
-Lumen utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromium) et construit sa propre interface par-dessus.
+Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromium) et construit sa propre interface par-dessus.
 
 ## Fonctionnalités
 
@@ -16,6 +16,11 @@ Lumen utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromium) 
 ## Lancer le projet
 
 Il faut [Node.js](https://nodejs.org/) installé.
+
+```bash
+git clone https://github.com/Souyakoff/Jam-a.git
+cd Jam-a
+```
 
 ```bash
 npm install

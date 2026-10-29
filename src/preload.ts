@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 // API exposée à l'interface (public/index.html). Rien d'autre de Node n'est accessible.
-contextBridge.exposeInMainWorld('lumen', {
+contextBridge.exposeInMainWorld('jama', {
   newTab: () => ipcRenderer.send('tab:new'),
   closeTab: (id: number) => ipcRenderer.send('tab:close', id),
   activateTab: (id: number) => ipcRenderer.send('tab:activate', id),

@@ -27,7 +27,7 @@ function createWindow() {
     height: 820,
     minWidth: 600,
     minHeight: 400,
-    title: 'Lumen',
+    title: 'Jam<a',
     backgroundColor: '#1e1f24',
     autoHideMenuBar: true,
     webPreferences: {
@@ -146,7 +146,7 @@ function sendState() {
   };
   win.webContents.send('state', state);
   const active = activeTab();
-  win.setTitle(active ? `${active.view.webContents.getTitle() || 'Nouvel onglet'} — Lumen` : 'Lumen');
+  win.setTitle(active ? `${active.view.webContents.getTitle() || 'Nouvel onglet'} — Jam<a` : 'Jam<a');
 }
 
 // Transforme ce que tape l'utilisateur en URL : adresse, localhost ou recherche

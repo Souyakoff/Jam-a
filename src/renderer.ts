@@ -19,7 +19,7 @@ interface BrowserState {
   tabs: TabState[];
 }
 
-declare const lumen: {
+declare const jama: {
   newTab(): void;
   closeTab(id: number): void;
   activateTab(id: number): void;
@@ -65,9 +65,9 @@ function renderTab(tab: TabState, active: boolean) {
   const el = document.createElement('div');
   el.className = 'tab' + (active ? ' active' : '');
   el.title = tab.title;
-  el.onclick = () => lumen.activateTab(tab.id);
+  el.onclick = () => jama.activateTab(tab.id);
   // Clic molette = fermer l'onglet
-  el.onauxclick = (e) => e.button === 1 && lumen.closeTab(tab.id);
+  el.onauxclick = (e) => e.button === 1 && jama.closeTab(tab.id);
 
   if (tab.loading) {
     const spinner = document.createElement('div');
@@ -90,25 +90,25 @@ function renderTab(tab: TabState, active: boolean) {
   close.title = 'Fermer (Ctrl+W)';
   close.onclick = (e) => {
     e.stopPropagation();
-    lumen.closeTab(tab.id);
+    jama.closeTab(tab.id);
   };
 
   el.append(title, close);
   return el;
 }
 
-$('new-tab').onclick = () => lumen.newTab();
-backBtn.onclick = () => lumen.back();
-forwardBtn.onclick = () => lumen.forward();
-reloadBtn.onclick = () => (current?.loading ? lumen.stop() : lumen.reload());
-$('home').onclick = () => lumen.home();
-$('devtools').onclick = () => lumen.toggleDevTools();
-$('responsive').onclick = () => lumen.toggleResponsive();
-$('clear').onclick = () => lumen.clearSiteData();
+$('new-tab').onclick = () => jama.newTab();
+backBtn.onclick = () => jama.back();
+forwardBtn.onclick = () => jama.forward();
+reloadBtn.onclick = () => (current?.loading ? jama.stop() : jama.reload());
+$('home').onclick = () => jama.home();
+$('devtools').onclick = () => jama.toggleDevTools();
+$('responsive').onclick = () => jama.toggleResponsive();
+$('clear').onclick = () => jama.clearSiteData();
 
 $('address-form').onsubmit = (e) => {
   e.preventDefault();
-  lumen.go(address.value);
+  jama.go(address.value);
   address.blur();
 };
 address.onfocus = () => address.select();
@@ -119,5 +119,5 @@ address.onkeydown = (e) => {
   }
 };
 
-lumen.onState(render);
-lumen.onFocusAddress(() => address.focus());
+jama.onState(render);
+jama.onFocusAddress(() => address.focus());
