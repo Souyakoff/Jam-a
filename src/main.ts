@@ -4,6 +4,7 @@ import { pathToFileURL } from 'url';
 import { enableAdblock, blockedCount, isAdblockReady } from './adblock';
 import { setupJsonViewer } from './json-viewer';
 import * as library from './library';
+import { explain, Explanation } from './explain';
 
 // Hauteur de la barre d'onglets + barre d'outils (doit correspondre à style.css)
 const TOOLBAR_HEIGHT = 84;
@@ -13,6 +14,9 @@ const START_PAGE = pathToFileURL(path.join(__dirname, '../public/start.html')).t
 const LIBRARY_PAGE = pathToFileURL(path.join(__dirname, '../public/library.html')).toString();
 // Nombre de vues gardées en mémoire par onglet pour le bouton retour (voir Tab)
 const MAX_SEGMENTS = 6;
+// Largeur du panneau des erreurs (doit correspondre à #panel dans style.css)
+const PANEL_WIDTH = 380;
+const MAX_ISSUES = 100;
 
 // Raccourcis tapables dans la barre d'adresse pour les pages internes
 const INTERNAL_ALIASES: Record<string, string> = {
@@ -27,6 +31,17 @@ interface Segment {
   view: WebContentsView;
   internal: boolean;
   favicon: string | null;
+  // Erreurs et avertissements de la console pour la page affichée
+  issues: Issue[];
+}
+
+interface Issue extends Explanation {
+  level: 'error' | 'warning';
+  message: string;
+  source: string;
+  line: number;
+  // Une même erreur répétée n'est affichée qu'une fois, avec un compteur
+  count: number;
 }
 
 // Quand un onglet passe d'une page interne à un site (ou l'inverse), il change de vue.
@@ -45,6 +60,7 @@ const tabs = new Map<number, Tab>();
 let activeId: number | null = null;
 let nextId = 1;
 let responsive = false;
+let panelOpen = false;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -107,7 +123,7 @@ function createSegment(tab: Tab, internal: boolean): Segment {
       preload: internal ? path.join(__dirname, 'internal-preload.js') : undefined,
     },
   });
-  const segment: Segment = { view, internal, favicon: null };
+  const segment: Segment = { view, internal, favicon: null, issues: [] };
   const wc = view.webContents;
 
   // Une navigation qui n'est pas un retour/avance crée une nouvelle branche :
@@ -126,6 +142,7 @@ function createSegment(tab: Tab, internal: boolean): Segment {
   });
   wc.on('did-navigate', (_e, url) => {
     newNavigation();
+    segment.issues = [];
     if (!internal) library.addVisit(url, wc.getTitle(), null);
     sendState();
   });
@@ -137,6 +154,12 @@ function createSegment(tab: Tab, internal: boolean): Segment {
     segment.favicon = favicons[0] ?? null;
     if (!internal && segment.favicon) library.updateVisit(wc.getURL(), { favicon: segment.favicon });
     sendState();
+  });
+  wc.on('console-message', ({ level, message, sourceId, lineNumber }) => {
+    if (internal || (level !== 'error' && level !== 'warning')) return;
+    // Avertissement d'Electron en mode développement : il concerne Jam<a, pas la page
+    if (message.startsWith('Electron Security Warning')) return;
+    addIssue(segment, level, message, sourceId, lineNumber);
   });
   wc.on('before-input-event', handleShortcut);
   // Un lien vers un site depuis une page interne (ou l'inverse) change de type de vue
@@ -153,6 +176,41 @@ function createSegment(tab: Tab, internal: boolean): Segment {
   });
   if (!internal) setupJsonViewer(wc);
   return segment;
+}
+
+function addIssue(segment: Segment, level: Issue['level'], message: string, source: string, line = 0) {
+  const same = segment.issues.find((i) => i.message === message && i.source === source && i.line === line);
+  if (same) same.count++;
+  else if (segment.issues.length < MAX_ISSUES) {
+    segment.issues.push({ level, message, source, line, count: 1, ...explain(message, source) });
+  }
+  scheduleState();
+}
+
+function findSegment(webContentsId: number | undefined) {
+  for (const tab of tabs.values()) {
+    for (const segment of tab.segments) {
+      if (segment.view.webContents.id === webContentsId) return segment;
+    }
+  }
+}
+
+// Les fichiers introuvables (404…) et les serveurs injoignables ne passent pas par la console :
+// on les récupère au niveau du réseau. La page elle-même est exclue (son erreur s'affiche déjà).
+function watchNetworkErrors() {
+  const { webRequest } = session.defaultSession;
+  webRequest.onCompleted(({ webContentsId, statusCode, url, resourceType }) => {
+    const segment = findSegment(webContentsId);
+    if (!segment || segment.internal || statusCode < 400 || resourceType === 'mainFrame') return;
+    addIssue(segment, 'error', `Failed to load resource: the server responded with a status of ${statusCode}`, url);
+  });
+  webRequest.onErrorOccurred(({ webContentsId, error, url, resourceType }) => {
+    const segment = findSegment(webContentsId);
+    // ABORTED = requête annulée, FAILED = souvent CORS (déjà expliqué par la console), BLOCKED = notre bloqueur
+    if (!segment || segment.internal || resourceType === 'mainFrame') return;
+    if (/ERR_(ABORTED|FAILED|BLOCKED_BY_CLIENT)/.test(error)) return;
+    addIssue(segment, 'error', `Failed to load resource: ${error}`, url);
+  });
 }
 
 function navigate(tab: Tab, url: string) {
@@ -251,8 +309,10 @@ function activeTab() {
 function layout() {
   const tab = activeTab();
   if (!tab) return;
-  const { width, height } = win.getContentBounds();
-  const viewHeight = Math.max(0, height - TOOLBAR_HEIGHT);
+  const bounds = win.getContentBounds();
+  // Le panneau des erreurs prend la droite de la fenêtre, la page se rétrécit
+  const width = Math.max(0, bounds.width - (panelOpen ? PANEL_WIDTH : 0));
+  const viewHeight = Math.max(0, bounds.height - TOOLBAR_HEIGHT);
   if (responsive && width > RESPONSIVE_WIDTH) {
     const x = Math.round((width - RESPONSIVE_WIDTH) / 2);
     viewOf(tab).setBounds({ x, y: TOOLBAR_HEIGHT, width: RESPONSIVE_WIDTH, height: viewHeight });
@@ -261,15 +321,28 @@ function layout() {
   }
 }
 
+// Regroupe les mises à jour fréquentes (une page peut écrire des centaines d'erreurs d'un coup)
+let stateTimer: NodeJS.Timeout | null = null;
+function scheduleState() {
+  stateTimer ??= setTimeout(() => {
+    stateTimer = null;
+    sendState();
+  }, 100);
+}
+
 // Envoie l'état de tous les onglets à l'interface
 function sendState() {
   if (win.isDestroyed()) return;
+  const active = activeTab();
   const state = {
     activeId,
     responsive,
     adblock: isAdblockReady(),
+    panelOpen,
+    // Le détail des erreurs n'est envoyé que pour l'onglet affiché, et seulement si le panneau est ouvert
+    issues: panelOpen && active ? current(active).issues : [],
     tabs: [...tabs.values()].map((t) => {
-      const { view, internal, favicon } = current(t);
+      const { view, internal, favicon, issues } = current(t);
       const wc = view.webContents;
       const url = wc.getURL();
       return {
@@ -283,11 +356,12 @@ function sendState() {
         blocked: blockedCount(wc.id),
         canBookmark: !internal && url !== '',
         bookmarked: !internal && library.isBookmarked(url),
+        errors: issues.filter((i) => i.level === 'error' && !i.harmless).length,
+        canInspect: !internal,
       };
     }),
   };
   win.webContents.send('state', state);
-  const active = activeTab();
   win.setTitle(active ? `${viewOf(active).webContents.getTitle() || 'Nouvel onglet'} — Jam<a` : 'Jam<a');
 }
 
@@ -326,6 +400,7 @@ function handleShortcut(event: Electron.Event, input: Input) {
   else if ((ctrl && key === 'r') || key === 'f5') wc?.reload();
   else if (key === 'f12' || (ctrl && input.shift && key === 'i')) wc?.toggleDevTools();
   else if (ctrl && input.shift && key === 'm') toggleResponsive();
+  else if (ctrl && input.shift && key === 'e') togglePanel();
   else if (ctrl && key === 'd') toggleActiveBookmark();
   else if (ctrl && key === 'h') createTab(INTERNAL_ALIASES['jama://historique']);
   else if (ctrl && input.shift && key === 'o') createTab(INTERNAL_ALIASES['jama://favoris']);
@@ -338,6 +413,12 @@ function handleShortcut(event: Electron.Event, input: Input) {
 
 function toggleResponsive() {
   responsive = !responsive;
+  layout();
+  sendState();
+}
+
+function togglePanel() {
+  panelOpen = !panelOpen;
   layout();
   sendState();
 }
@@ -366,6 +447,15 @@ ipcMain.on('bookmark:toggle', toggleActiveBookmark);
 ipcMain.on('library:show', () => createTab(INTERNAL_ALIASES['jama://favoris']));
 ipcMain.on('dev:devtools', () => activeWc()?.toggleDevTools());
 ipcMain.on('dev:responsive', toggleResponsive);
+ipcMain.on('dev:panel', togglePanel);
+ipcMain.on('dev:clear-issues', () => {
+  const tab = activeTab();
+  if (tab) current(tab).issues = [];
+  sendState();
+});
+ipcMain.on('tab:open-url', (_e, url: string) => {
+  if (/^https:\/\//.test(url)) createTab(url);
+});
 ipcMain.on('dev:clear-site-data', async () => {
   const url = activeWc()?.getURL();
   if (!url?.startsWith('http')) return;
@@ -400,6 +490,7 @@ library.onLibraryChange(() => {
 
 app.whenReady().then(async () => {
   library.loadLibrary(app.getPath('userData'));
+  watchNetworkErrors();
   createWindow();
   await enableAdblock(session.defaultSession, app.getPath('userData'), sendState);
 });

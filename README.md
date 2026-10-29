@@ -10,6 +10,8 @@ Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromiu
 - Bloqueur de pubs et de traqueurs intégré (EasyList + EasyPrivacy), avec compteur par onglet
 - Favoris (☆ dans la barre d'adresse) et historique avec recherche, stockés uniquement sur ton ordinateur
 - Visionneuse JSON : les API et fichiers `.json` s'affichent en arbre coloré et dépliable
+- 🩺 Erreurs expliquées : les erreurs de la console (JavaScript, 404, CORS…) traduites en français simple, avec une
+  piste pour corriger et un lien vers la doc MDN (`Ctrl+Shift+E`)
 - Outils de développement en un clic (`F12`)
 - Mode mobile pour tester le responsive (`Ctrl+Shift+M`)
 - Bouton pour vider le cache et les cookies du site ouvert
@@ -42,6 +44,7 @@ npm start
 | `Ctrl+H` / `Ctrl+Shift+O` | Historique / favoris |
 | `F12` | Outils de développement |
 | `Ctrl+Shift+M` | Mode mobile |
+| `Ctrl+Shift+E` | Panneau des erreurs expliquées |
 
 ## Comment c'est organisé
 
@@ -51,6 +54,7 @@ src/
   adblock.ts           Bloqueur de pubs et de traqueurs
   json-viewer.ts       Visionneuse JSON injectée dans les pages JSON
   library.ts           Favoris et historique (fichiers JSON dans le dossier de l'utilisateur)
+  explain.ts           Explications des erreurs de console (ajoute tes règles ici !)
   preload.ts           Pont sécurisé entre l'interface et main.ts
   internal-preload.ts  Pont réservé aux pages internes (accueil, bibliothèque)
   renderer.ts          Logique de l'interface (onglets, barre d'outils)
@@ -73,6 +77,9 @@ jamais lire tes données.
 ## Contribuer
 
 Toutes les contributions sont les bienvenues, même petites ! Ouvre une issue pour proposer une idée ou signaler un bug.
+
+Une bonne première contribution : expliquer une nouvelle erreur. Ajoute une règle dans `RULES` de
+[`src/explain.ts`](src/explain.ts), avec le motif du message, un titre, une explication simple et une piste pour corriger.
 
 ## Licence
 

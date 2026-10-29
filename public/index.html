@@ -26,10 +26,23 @@
 
     <button id="library" class="tool" title="Favoris et historique (Ctrl+Shift+O / Ctrl+H)">📚</button>
     <span id="shield" title="Pubs et traqueurs bloqués sur cet onglet">🛡 <span id="blocked">0</span></span>
+    <button id="issues" class="tool" title="Erreurs de la page expliquées (Ctrl+Shift+E)">🩺 <span id="issue-count">0</span></button>
     <button id="responsive" class="tool" title="Mode mobile (Ctrl+Shift+M)">📱</button>
     <button id="clear" class="tool" title="Vider le cache et les cookies de ce site">🧹</button>
     <button id="devtools" class="tool" title="Outils de développement (F12)">&lt;/&gt;</button>
   </div>
+
+  <aside id="panel" hidden>
+    <header>
+      <h2>🩺 Erreurs de la page</h2>
+      <button id="panel-close" class="icon" title="Fermer (Ctrl+Shift+E)">×</button>
+    </header>
+    <div id="panel-actions">
+      <button id="panel-console" class="tool">Ouvrir la console (F12)</button>
+      <button id="panel-clear" class="tool">Effacer</button>
+    </div>
+    <div id="issue-list"></div>
+  </aside>
 
   <script src="../dist/renderer.js"></script>
 </body>

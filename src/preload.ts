@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld('jama', {
   toggleDevTools: () => ipcRenderer.send('dev:devtools'),
   toggleResponsive: () => ipcRenderer.send('dev:responsive'),
   clearSiteData: () => ipcRenderer.send('dev:clear-site-data'),
+  togglePanel: () => ipcRenderer.send('dev:panel'),
+  clearIssues: () => ipcRenderer.send('dev:clear-issues'),
+  openUrl: (url: string) => ipcRenderer.send('tab:open-url', url),
   onState: (callback: (state: unknown) => void) =>
     ipcRenderer.on('state', (_e, state) => callback(state)),
   onFocusAddress: (callback: () => void) => ipcRenderer.on('focus-address', () => callback()),

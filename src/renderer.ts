@@ -12,12 +12,30 @@ interface TabState {
   blocked: number;
   canBookmark: boolean;
   bookmarked: boolean;
+  errors: number;
+  canInspect: boolean;
+}
+
+// Une erreur de console, déjà expliquée par explain.ts
+interface Issue {
+  level: 'error' | 'warning';
+  message: string;
+  source: string;
+  line: number;
+  count: number;
+  title: string;
+  explanation: string;
+  fix: string;
+  link?: string;
+  harmless?: boolean;
 }
 
 interface BrowserState {
   activeId: number | null;
   responsive: boolean;
   adblock: boolean;
+  panelOpen: boolean;
+  issues: Issue[];
   tabs: TabState[];
 }
 
@@ -36,6 +54,9 @@ declare const jama: {
   toggleDevTools(): void;
   toggleResponsive(): void;
   clearSiteData(): void;
+  togglePanel(): void;
+  clearIssues(): void;
+  openUrl(url: string): void;
   onState(callback: (state: BrowserState) => void): void;
   onFocusAddress(callback: () => void): void;
 };
@@ -69,6 +90,84 @@ function render(state: BrowserState) {
   $('blocked').textContent = String(current.blocked);
   $('shield').classList.toggle('off', !state.adblock);
   $('responsive').classList.toggle('active', state.responsive);
+
+  const issuesBtn = $<HTMLButtonElement>('issues');
+  issuesBtn.hidden = !current.canInspect;
+  issuesBtn.classList.toggle('has-errors', current.errors > 0);
+  issuesBtn.classList.toggle('active', state.panelOpen);
+  $('issue-count').textContent = String(current.errors);
+  $('panel').hidden = !state.panelOpen;
+  if (state.panelOpen) renderIssues(state.issues, current.canInspect);
+}
+
+// ---------- Panneau des erreurs ----------
+
+let lastIssues = '';
+
+function renderIssues(issues: Issue[], canInspect: boolean) {
+  // Ne pas reconstruire la liste (et perdre les détails ouverts) si rien n'a changé
+  const key = JSON.stringify(issues) + canInspect;
+  if (key === lastIssues) return;
+  lastIssues = key;
+
+  const list = $('issue-list');
+  if (!canInspect) {
+    list.replaceChildren(panelMessage('Les pages internes de Jam<a ne sont pas analysées. Ouvre un site pour voir ses erreurs.'));
+    return;
+  }
+  if (!issues.length) {
+    list.replaceChildren(panelMessage('Aucune erreur sur cette page 🎉\nSi quelque chose ne marche pas, recharge la page : les erreurs apparaîtront ici.'));
+    return;
+  }
+  // Les vraies erreurs d'abord, puis les avertissements, puis ce qui est sans gravité
+  const rank = (i: Issue) => (i.harmless ? 2 : i.level === 'error' ? 0 : 1);
+  list.replaceChildren(...[...issues].sort((a, b) => rank(a) - rank(b)).map(renderIssue));
+}
+
+function panelMessage(text: string) {
+  const p = document.createElement('p');
+  p.className = 'panel-empty';
+  p.innerText = text;
+  return p;
+}
+
+function renderIssue(issue: Issue) {
+  const card = document.createElement('div');
+  card.className = `issue ${issue.level}${issue.harmless ? ' harmless' : ''}`;
+
+  const title = document.createElement('h3');
+  title.textContent = `${issue.harmless ? 'ℹ️' : issue.level === 'error' ? '❌' : '⚠️'} ${issue.title}`;
+  if (issue.count > 1) {
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = `×${issue.count}`;
+    title.append(count);
+  }
+
+  const explanation = document.createElement('p');
+  explanation.textContent = issue.explanation;
+  const fix = document.createElement('p');
+  fix.className = 'fix';
+  fix.textContent = `💡 ${issue.fix}`;
+
+  const details = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = 'Message original';
+  const raw = document.createElement('pre');
+  const where = issue.source ? `\n\n${issue.source}${issue.line ? `, ligne ${issue.line}` : ''}` : '';
+  raw.textContent = issue.message + where;
+  details.append(summary, raw);
+
+  card.append(title, explanation, fix);
+  if (issue.link) {
+    const doc = document.createElement('button');
+    doc.className = 'doc';
+    doc.textContent = '📖 En savoir plus';
+    doc.onclick = () => jama.openUrl(issue.link!);
+    card.append(doc);
+  }
+  card.append(details);
+  return card;
 }
 
 function renderTab(tab: TabState, active: boolean) {
@@ -117,6 +216,10 @@ $('library').onclick = () => jama.showLibrary();
 $('devtools').onclick = () => jama.toggleDevTools();
 $('responsive').onclick = () => jama.toggleResponsive();
 $('clear').onclick = () => jama.clearSiteData();
+$('issues').onclick = () => jama.togglePanel();
+$('panel-close').onclick = () => jama.togglePanel();
+$('panel-console').onclick = () => jama.toggleDevTools();
+$('panel-clear').onclick = () => jama.clearIssues();
 
 $('address-form').onsubmit = (e) => {
   e.preventDefault();
