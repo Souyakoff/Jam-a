@@ -63,7 +63,7 @@ const RULES: Rule[] = [
     explain: () => ({
       title: 'Bloqué par le bloqueur de pubs de Jam<a',
       explanation: 'Ce fichier vient d’un service de pub ou de pistage, alors Jam<a l’a bloqué pour protéger ta vie privée.',
-      fix: 'Rien à faire, c’est voulu 🛡',
+      fix: 'Rien à faire, c’est voulu.',
       harmless: true,
     }),
   },

@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.log
 .adblock-cache.bin
+release/
+.profil-test/

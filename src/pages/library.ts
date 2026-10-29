@@ -39,7 +39,7 @@
         entryRow(b, dayLabel(b.time), () => jamaLibrary.removeBookmark(b.url))));
       if (!items.length) list.append(empty(query
         ? 'Aucun favori ne correspond à ta recherche.'
-        : 'Pas encore de favoris. Clique sur ☆ dans la barre d’adresse (ou Ctrl+D) pour en ajouter un.'));
+        : 'Pas encore de favoris. Clique sur l’étoile dans la barre d’adresse (ou Ctrl+D) pour en ajouter un.'));
       return;
     }
 

@@ -1,13 +1,20 @@
 // Visionneuse JSON : quand une page est du JSON (API, fichier .json), on remplace le texte brut
 // par un arbre coloré et dépliable. Le CSS passe par insertCSS pour ne pas être bloqué par la CSP du site.
 
+import { readFileSync } from 'fs';
+import path from 'path';
+
+// Le jeu d'icônes de l'interface (icons.ts compilé), injecté dans la page avec la visionneuse
+const ICONS_SCRIPT = readFileSync(path.join(__dirname, 'icons.js'), 'utf8');
+
 export function setupJsonViewer(wc: Electron.WebContents) {
   wc.on('dom-ready', async () => {
     try {
       const isJson = await wc.executeJavaScript(`/json/i.test(document.contentType)`);
       if (!isJson) return;
       await wc.insertCSS(VIEWER_CSS);
-      await wc.executeJavaScript(`(${renderJsonViewer.toString()})()`);
+      // Tout reste dans une fonction pour ne rien ajouter aux variables globales de la page
+      await wc.executeJavaScript(`(() => {\n${ICONS_SCRIPT}\n;(${renderJsonViewer.toString()})(icon);\n})()`);
     } catch {
       // La page a changé entre-temps : rien à faire
     }
@@ -15,7 +22,7 @@ export function setupJsonViewer(wc: Electron.WebContents) {
 }
 
 // Exécutée DANS la page : elle doit rester autonome (pas de variables extérieures).
-function renderJsonViewer() {
+function renderJsonViewer(makeIcon: (name: string, size?: number) => SVGSVGElement) {
   const root = document.documentElement;
   if (root.dataset.jamaJson) return;
   const raw = (document.querySelector('body > pre') ?? document.body).textContent ?? '';
@@ -97,30 +104,33 @@ function renderJsonViewer() {
   };
 
   const toolbar = el('div', 'jama-toolbar');
-  const button = (label: string, onClick: () => void) => {
-    const b = el('button', '', label);
+  const setLabel = (b: HTMLElement, iconName: string, label: string) => b.replaceChildren(makeIcon(iconName, 14), label);
+  const button = (iconName: string, label: string, onClick: () => void) => {
+    const b = el('button');
+    setLabel(b, iconName, label);
     b.onclick = onClick;
     toolbar.append(b);
     return b;
   };
-  button('🌳 Arbre', () => showTree(2));
-  button('📄 Brut', () => {
+  button('tree', 'Arbre', () => showTree(2));
+  button('file-text', 'Brut', () => {
     tree.hidden = true;
     rawView.hidden = false;
   });
-  button('⊞ Tout déplier', () => showTree(Infinity));
-  button('⊟ Tout replier', () => showTree(1));
-  const copy = button('📋 Copier', async () => {
+  button('expand', 'Tout déplier', () => showTree(Infinity));
+  button('collapse', 'Tout replier', () => showTree(1));
+  const copy = button('copy', 'Copier', async () => {
     await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    copy.textContent = '✅ Copié !';
-    setTimeout(() => (copy.textContent = '📋 Copier'), 1500);
+    setLabel(copy, 'check', 'Copié');
+    setTimeout(() => setLabel(copy, 'copy', 'Copier'), 1500);
   });
   const size = raw.length > 1024 ? `${(raw.length / 1024).toFixed(1)} Ko` : `${raw.length} octets`;
   toolbar.append(el('span', 'jama-size', size));
 
-  const tip = el('div', 'jama-tip',
-    '💡 Ceci est du JSON, un format que les programmes utilisent pour échanger des données. ' +
-    'Clique sur ▸ pour déplier un objet { } ou une liste [ ].');
+  const tip = el('div', 'jama-tip');
+  tip.append(makeIcon('info', 16), el('span', '',
+    'Ceci est du JSON, un format que les programmes utilisent pour échanger des données. ' +
+    'Clique sur la flèche à gauche d’un objet { } ou d’une liste [ ] pour le déplier.'));
 
   document.body.replaceChildren(toolbar, tip, tree, rawView);
   document.body.className = 'jama-json';
@@ -138,20 +148,27 @@ const VIEWER_CSS = `
     font-family: system-ui, "Segoe UI", sans-serif;
   }
   .jama-toolbar button {
+    display: inline-flex; align-items: center; gap: 6px;
     border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer;
     background: #383b45; color: #e6e6eb; font: inherit;
   }
   .jama-toolbar button:hover { background: #4a4e5a; }
   .jama-size { margin-left: auto; color: #9a9ca8; }
   .jama-tip {
+    display: flex; align-items: center; gap: 10px;
     margin: 12px; padding: 8px 12px; border-radius: 8px; background: #2a2c33; color: #9a9ca8;
     font-family: system-ui, "Segoe UI", sans-serif;
   }
+  .jama-tip svg { flex-shrink: 0; color: #7c9cff; }
   .jama-tree, .jama-raw { padding: 4px 16px 24px; margin: 0; }
   .jama-children { padding-left: 20px; border-left: 1px solid #383b45; margin-left: 5px; }
   .jama-node > summary { cursor: pointer; list-style: none; }
-  .jama-node > summary::before { content: "▸ "; color: #9a9ca8; }
-  .jama-node[open] > summary::before { content: "▾ "; }
+  .jama-node > summary::before {
+    content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 8px 2px 1px;
+    border-right: 1.5px solid #9a9ca8; border-bottom: 1.5px solid #9a9ca8;
+    transform: rotate(-45deg); transition: transform 0.1s;
+  }
+  .jama-node[open] > summary::before { transform: rotate(45deg); }
   .jama-node > summary:hover { background: #2a2c33; }
   .jama-row { padding-left: 14px; }
   .jama-key { color: #7c9cff; }

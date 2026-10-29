@@ -8,16 +8,25 @@ Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromiu
 
 - Onglets, barre d'adresse intelligente (adresse, `localhost:3000` ou recherche DuckDuckGo)
 - Bloqueur de pubs et de traqueurs intégré (EasyList + EasyPrivacy), avec compteur par onglet
-- Favoris (☆ dans la barre d'adresse) et historique avec recherche, stockés uniquement sur ton ordinateur
+- Favoris (étoile dans la barre d'adresse) et historique avec recherche, stockés uniquement sur ton ordinateur
 - Visionneuse JSON : les API et fichiers `.json` s'affichent en arbre coloré et dépliable
-- 🩺 Erreurs expliquées : les erreurs de la console (JavaScript, 404, CORS…) traduites en français simple, avec une
+- Erreurs expliquées : les erreurs de la console (JavaScript, 404, CORS…) traduites en français simple, avec une
   piste pour corriger et un lien vers la doc MDN (`Ctrl+Shift+E`)
 - Outils de développement en un clic (`F12`)
 - Mode mobile pour tester le responsive (`Ctrl+Shift+M`)
 - Bouton pour vider le cache et les cookies du site ouvert
 - Page d'accueil avec des conseils pour débuter
 
-## Lancer le projet
+## Installer (Windows)
+
+Télécharge `Jam-a-Setup-x.y.z.exe` depuis la page
+[Releases](https://github.com/Souyakoff/Jam-a/releases) et lance-le. L'installeur crée un raccourci sur le bureau et
+dans le menu Démarrer.
+
+> L'installeur n'est pas encore signé numériquement : Windows peut afficher « Windows a protégé votre ordinateur ».
+> Clique sur « Informations complémentaires » puis « Exécuter quand même ».
+
+## Lancer le projet (développement)
 
 Il faut [Node.js](https://nodejs.org/) installé.
 
@@ -30,6 +39,20 @@ cd Jam-a
 npm install
 npm start
 ```
+
+Pour tester sans toucher à tes favoris et à ton historique, utilise un profil séparé (PowerShell) :
+
+```powershell
+$env:JAMA_PROFILE = ".profil-test"; npm start
+```
+
+Pour fabriquer l'installeur Windows (il apparaît dans `release/`) :
+
+```bash
+npm run dist
+```
+
+Le logo se trouve dans `build/icon.svg`. Après l'avoir modifié, régénère les PNG avec `npm run icon`.
 
 ## Raccourcis
 
@@ -55,6 +78,7 @@ src/
   json-viewer.ts       Visionneuse JSON injectée dans les pages JSON
   library.ts           Favoris et historique (fichiers JSON dans le dossier de l'utilisateur)
   explain.ts           Explications des erreurs de console (ajoute tes règles ici !)
+  icons.ts             Icônes SVG partagées par toute l'interface
   preload.ts           Pont sécurisé entre l'interface et main.ts
   internal-preload.ts  Pont réservé aux pages internes (accueil, bibliothèque)
   renderer.ts          Logique de l'interface (onglets, barre d'outils)
@@ -83,4 +107,4 @@ Une bonne première contribution : expliquer une nouvelle erreur. Ajoute une rè
 
 ## Licence
 
-[MIT](LICENSE)
+[MIT](LICENSE). Les icônes s'inspirent du style de [Lucide](https://lucide.dev) (licence ISC).

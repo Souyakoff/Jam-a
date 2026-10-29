@@ -78,12 +78,11 @@ function render(state: BrowserState) {
   if (document.activeElement !== address) address.value = current.url;
   backBtn.disabled = !current.canGoBack;
   forwardBtn.disabled = !current.canGoForward;
-  reloadBtn.textContent = current.loading ? '✕' : '↻';
+  reloadBtn.classList.toggle('loading', current.loading);
   reloadBtn.title = current.loading ? 'Arrêter' : 'Recharger (Ctrl+R)';
 
   const star = $<HTMLButtonElement>('bookmark');
   star.hidden = !current.canBookmark;
-  star.textContent = current.bookmarked ? '★' : '☆';
   star.classList.toggle('on', current.bookmarked);
   star.title = current.bookmarked ? 'Retirer des favoris (Ctrl+D)' : 'Ajouter aux favoris (Ctrl+D)';
 
@@ -112,11 +111,11 @@ function renderIssues(issues: Issue[], canInspect: boolean) {
 
   const list = $('issue-list');
   if (!canInspect) {
-    list.replaceChildren(panelMessage('Les pages internes de Jam<a ne sont pas analysées. Ouvre un site pour voir ses erreurs.'));
+    list.replaceChildren(panelMessage('info', 'Les pages internes de Jam<a ne sont pas analysées. Ouvre un site pour voir ses erreurs.'));
     return;
   }
   if (!issues.length) {
-    list.replaceChildren(panelMessage('Aucune erreur sur cette page 🎉\nSi quelque chose ne marche pas, recharge la page : les erreurs apparaîtront ici.'));
+    list.replaceChildren(panelMessage('circle-check', 'Aucune erreur sur cette page.\nSi quelque chose ne marche pas, recharge la page : les erreurs apparaîtront ici.'));
     return;
   }
   // Les vraies erreurs d'abord, puis les avertissements, puis ce qui est sans gravité
@@ -124,11 +123,14 @@ function renderIssues(issues: Issue[], canInspect: boolean) {
   list.replaceChildren(...[...issues].sort((a, b) => rank(a) - rank(b)).map(renderIssue));
 }
 
-function panelMessage(text: string) {
+function panelMessage(iconName: string, text: string) {
+  const box = document.createElement('div');
+  box.className = 'panel-empty';
   const p = document.createElement('p');
-  p.className = 'panel-empty';
   p.innerText = text;
-  return p;
+  p.style.margin = '0';
+  box.append(icon(iconName, 28), p);
+  return box;
 }
 
 function renderIssue(issue: Issue) {
@@ -136,7 +138,9 @@ function renderIssue(issue: Issue) {
   card.className = `issue ${issue.level}${issue.harmless ? ' harmless' : ''}`;
 
   const title = document.createElement('h3');
-  title.textContent = `${issue.harmless ? 'ℹ️' : issue.level === 'error' ? '❌' : '⚠️'} ${issue.title}`;
+  const text = document.createElement('span');
+  text.textContent = issue.title;
+  title.append(icon(issue.harmless ? 'info' : issue.level === 'error' ? 'circle-x' : 'warning'), text);
   if (issue.count > 1) {
     const count = document.createElement('span');
     count.className = 'count';
@@ -148,7 +152,9 @@ function renderIssue(issue: Issue) {
   explanation.textContent = issue.explanation;
   const fix = document.createElement('p');
   fix.className = 'fix';
-  fix.textContent = `💡 ${issue.fix}`;
+  const fixText = document.createElement('span');
+  fixText.textContent = issue.fix;
+  fix.append(icon('lightbulb'), fixText);
 
   const details = document.createElement('details');
   const summary = document.createElement('summary');
@@ -162,7 +168,7 @@ function renderIssue(issue: Issue) {
   if (issue.link) {
     const doc = document.createElement('button');
     doc.className = 'doc';
-    doc.textContent = '📖 En savoir plus';
+    doc.append(icon('book', 14), 'En savoir plus');
     doc.onclick = () => jama.openUrl(issue.link!);
     card.append(doc);
   }
@@ -195,7 +201,7 @@ function renderTab(tab: TabState, active: boolean) {
 
   const close = document.createElement('button');
   close.className = 'close';
-  close.textContent = '×';
+  close.append(icon('x', 14));
   close.title = 'Fermer (Ctrl+W)';
   close.onclick = (e) => {
     e.stopPropagation();

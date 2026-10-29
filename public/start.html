@@ -11,48 +11,53 @@
   <h1 class="logo">Jam<span>&lt;a</span></h1>
   <p class="tagline">Open source · Sans pub · Fait pour apprendre et coder</p>
 
-  <form class="search" action="https://duckduckgo.com/" method="get">
+  <form class="search search-field" action="https://duckduckgo.com/" method="get">
+    <i data-icon="search" data-size="18"></i>
     <input name="q" placeholder="Rechercher sur le web…" autofocus>
   </form>
 
-  <p class="tiles-title" id="bookmarks-title" hidden>⭐ Favoris</p>
+  <p class="tiles-title" id="bookmarks-title" hidden><i data-icon="star" data-size="14"></i>Favoris</p>
   <div class="tiles" id="bookmarks"></div>
 
   <section class="recent" id="recent" hidden>
-    <h2>🕘 Récemment visités · <a href="library.html#historique">tout l’historique</a></h2>
+    <h2><i data-icon="history" data-size="14"></i>Récemment visités · <a href="library.html#historique">tout l’historique</a></h2>
     <div id="recent-list"></div>
   </section>
 
   <div class="grid">
     <div class="card">
-      <h2>⌨️ Raccourcis</h2>
+      <h2><i data-icon="keyboard" data-size="18"></i>Raccourcis</h2>
       <ul>
         <li><kbd>Ctrl+T</kbd> nouvel onglet · <kbd>Ctrl+W</kbd> fermer</li>
         <li><kbd>Ctrl+L</kbd> barre d'adresse</li>
         <li><kbd>Ctrl+D</kbd> ajouter aux favoris</li>
         <li><kbd>Ctrl+H</kbd> historique · <kbd>Ctrl+Shift+O</kbd> favoris</li>
         <li><kbd>F12</kbd> outils de développement</li>
-        <li><kbd>Ctrl+Shift+M</kbd> mode mobile</li>
+        <li><kbd>Ctrl+Shift+E</kbd> erreurs expliquées · <kbd>Ctrl+Shift+M</kbd> mode mobile</li>
       </ul>
     </div>
     <div class="card">
-      <h2>🌱 Tu débutes ?</h2>
-      <p>Fais un clic droit sur une page puis ouvre les outils avec <kbd>F12</kbd> : tu verras le HTML et le CSS
-        qui la composent. Pour apprendre, essaie
+      <h2><i data-icon="book" data-size="18"></i>Tu débutes ?</h2>
+      <p>Ouvre les outils de développement avec <kbd>F12</kbd> : tu verras le HTML et le CSS qui composent la page.
+        Si quelque chose ne marche pas, le bouton <span class="inline-icon"><i data-icon="bug" data-size="13"></i></span>
+        t’explique les erreurs. Pour apprendre, essaie
         <a href="https://developer.mozilla.org/fr/docs/Learn">MDN Learn</a>.</p>
     </div>
     <div class="card">
-      <h2>🛠 Pour les devs</h2>
-      <p>Tape <kbd>localhost:3000</kbd> directement dans la barre d'adresse. Le bouton 🧹 vide le cache et les
-        cookies du site ouvert, 📱 simule un écran de téléphone. Ouvre une API JSON : elle s’affiche en arbre lisible.</p>
+      <h2><i data-icon="wrench" data-size="18"></i>Pour les devs</h2>
+      <p>Tape <kbd>localhost:3000</kbd> directement dans la barre d'adresse. Le bouton
+        <span class="inline-icon"><i data-icon="eraser" data-size="13"></i></span> vide le cache et les cookies du site
+        ouvert, <span class="inline-icon"><i data-icon="smartphone" data-size="13"></i></span> simule un écran de
+        téléphone. Ouvre une API JSON : elle s’affiche en arbre lisible.</p>
     </div>
     <div class="card">
-      <h2>🛡 Vie privée</h2>
+      <h2><i data-icon="lock" data-size="18"></i>Vie privée</h2>
       <p>Les pubs et les traqueurs sont bloqués par défaut. Aucune télémétrie : tes favoris et ton historique
         restent sur ton ordinateur, Jam&lt;a n’envoie rien sur toi.</p>
     </div>
   </div>
 
+  <script src="../dist/icons.js"></script>
   <script src="../dist/pages/entry.js"></script>
   <script src="../dist/pages/start.js"></script>
 </body>

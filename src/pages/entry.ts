@@ -44,7 +44,7 @@ function entryRow(entry: LibraryEntry, meta: string, onRemove: () => void) {
 
   const remove = document.createElement('button');
   remove.className = 'entry-remove';
-  remove.textContent = '×';
+  remove.append(icon('x', 14));
   remove.title = 'Supprimer';
   remove.onclick = onRemove;
 

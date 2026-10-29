@@ -9,41 +9,50 @@
 <body>
   <div id="tabbar">
     <div id="tabs"></div>
-    <button id="new-tab" class="icon" title="Nouvel onglet (Ctrl+T)">+</button>
+    <button id="new-tab" class="icon" title="Nouvel onglet (Ctrl+T)"><i data-icon="plus"></i></button>
   </div>
 
   <div id="toolbar">
-    <button id="back" class="icon" title="Précédent (Alt+←)">←</button>
-    <button id="forward" class="icon" title="Suivant (Alt+→)">→</button>
-    <button id="reload" class="icon" title="Recharger (Ctrl+R)">↻</button>
-    <button id="home" class="icon" title="Accueil">⌂</button>
+    <button id="back" class="icon" title="Précédent (Alt+←)"><i data-icon="arrow-left"></i></button>
+    <button id="forward" class="icon" title="Suivant (Alt+→)"><i data-icon="arrow-right"></i></button>
+    <button id="reload" class="icon" title="Recharger (Ctrl+R)">
+      <span class="when-idle"><i data-icon="reload"></i></span>
+      <span class="when-loading"><i data-icon="x"></i></span>
+    </button>
+    <button id="home" class="icon" title="Accueil"><i data-icon="home"></i></button>
 
     <form id="address-form">
       <input id="address" type="text" spellcheck="false" autocomplete="off"
              placeholder="Rechercher ou saisir une adresse (Ctrl+L)">
-      <button id="bookmark" type="button" title="Ajouter aux favoris (Ctrl+D)">☆</button>
+      <button id="bookmark" type="button" title="Ajouter aux favoris (Ctrl+D)"><i data-icon="star"></i></button>
     </form>
 
-    <button id="library" class="tool" title="Favoris et historique (Ctrl+Shift+O / Ctrl+H)">📚</button>
-    <span id="shield" title="Pubs et traqueurs bloqués sur cet onglet">🛡 <span id="blocked">0</span></span>
-    <button id="issues" class="tool" title="Erreurs de la page expliquées (Ctrl+Shift+E)">🩺 <span id="issue-count">0</span></button>
-    <button id="responsive" class="tool" title="Mode mobile (Ctrl+Shift+M)">📱</button>
-    <button id="clear" class="tool" title="Vider le cache et les cookies de ce site">🧹</button>
-    <button id="devtools" class="tool" title="Outils de développement (F12)">&lt;/&gt;</button>
+    <span id="shield" class="status" title="Pubs et traqueurs bloqués sur cet onglet">
+      <i data-icon="shield"></i><span id="blocked">0</span>
+    </span>
+    <button id="issues" class="tool" title="Erreurs de la page expliquées (Ctrl+Shift+E)">
+      <i data-icon="bug"></i><span id="issue-count">0</span>
+    </button>
+    <span class="separator"></span>
+    <button id="library" class="icon" title="Favoris et historique (Ctrl+Shift+O / Ctrl+H)"><i data-icon="library"></i></button>
+    <button id="responsive" class="icon" title="Mode mobile (Ctrl+Shift+M)"><i data-icon="smartphone"></i></button>
+    <button id="clear" class="icon" title="Vider le cache et les cookies de ce site"><i data-icon="eraser"></i></button>
+    <button id="devtools" class="icon" title="Outils de développement (F12)"><i data-icon="code"></i></button>
   </div>
 
   <aside id="panel" hidden>
     <header>
-      <h2>🩺 Erreurs de la page</h2>
-      <button id="panel-close" class="icon" title="Fermer (Ctrl+Shift+E)">×</button>
+      <h2><i data-icon="bug"></i>Erreurs de la page</h2>
+      <button id="panel-close" class="icon" title="Fermer (Ctrl+Shift+E)"><i data-icon="x"></i></button>
     </header>
     <div id="panel-actions">
-      <button id="panel-console" class="tool">Ouvrir la console (F12)</button>
-      <button id="panel-clear" class="tool">Effacer</button>
+      <button id="panel-console" class="tool"><i data-icon="terminal"></i>Ouvrir la console (F12)</button>
+      <button id="panel-clear" class="tool"><i data-icon="trash"></i>Effacer</button>
     </div>
     <div id="issue-list"></div>
   </aside>
 
+  <script src="../dist/icons.js"></script>
   <script src="../dist/renderer.js"></script>
 </body>
 </html>

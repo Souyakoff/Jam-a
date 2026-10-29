@@ -6,6 +6,10 @@ import { setupJsonViewer } from './json-viewer';
 import * as library from './library';
 import { explain, Explanation } from './explain';
 
+// Profil séparé pour les tests et le développement : JAMA_PROFILE=dossier npm start
+// (les favoris et l'historique de ton profil normal ne sont alors pas touchés)
+if (process.env.JAMA_PROFILE) app.setPath('userData', path.resolve(process.env.JAMA_PROFILE));
+
 // Hauteur de la barre d'onglets + barre d'outils (doit correspondre à style.css)
 const TOOLBAR_HEIGHT = 84;
 const RESPONSIVE_WIDTH = 390;
@@ -69,6 +73,7 @@ function createWindow() {
     minWidth: 600,
     minHeight: 400,
     title: 'Jam<a',
+    icon: path.join(__dirname, '../public/icon.png'),
     backgroundColor: '#1e1f24',
     autoHideMenuBar: true,
     webPreferences: {

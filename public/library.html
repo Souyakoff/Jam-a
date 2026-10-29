@@ -9,20 +9,24 @@
 </head>
 <body>
   <main class="library">
-    <h1>📚 Bibliothèque</h1>
+    <h1><i data-icon="library" data-size="26"></i>Bibliothèque</h1>
 
     <div class="library-bar">
       <div class="sections">
-        <button data-section="favoris">⭐ Favoris</button>
-        <button data-section="historique">🕘 Historique</button>
+        <button data-section="favoris"><i data-icon="star"></i>Favoris</button>
+        <button data-section="historique"><i data-icon="history"></i>Historique</button>
       </div>
-      <input id="search" type="search" placeholder="Rechercher…" autofocus>
-      <button id="clear-history" class="danger" hidden>Effacer l’historique</button>
+      <div class="search-field">
+        <i data-icon="search"></i>
+        <input id="search" type="search" placeholder="Rechercher…" autofocus>
+      </div>
+      <button id="clear-history" class="danger" hidden><i data-icon="trash"></i>Effacer l’historique</button>
     </div>
 
     <div id="list"></div>
   </main>
 
+  <script src="../dist/icons.js"></script>
   <script src="../dist/pages/entry.js"></script>
   <script src="../dist/pages/library.js"></script>
 </body>
