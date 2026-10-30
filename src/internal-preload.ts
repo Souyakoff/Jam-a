@@ -12,4 +12,15 @@ if (internalPage) {
     clearHistory: () => ipcRenderer.send('library:clear-history'),
     onChange: (callback: () => void) => ipcRenderer.on('library:changed', () => callback()),
   });
+
+  contextBridge.exposeInMainWorld('jamaDownloads', {
+    get: () => ipcRenderer.invoke('downloads:get'),
+    open: (id: number) => ipcRenderer.send('downloads:open', id),
+    showInFolder: (id: number) => ipcRenderer.send('downloads:show-in-folder', id),
+    cancel: (id: number) => ipcRenderer.send('downloads:cancel', id),
+    togglePause: (id: number) => ipcRenderer.send('downloads:toggle-pause', id),
+    remove: (id: number) => ipcRenderer.send('downloads:remove', id),
+    clear: () => ipcRenderer.send('downloads:clear'),
+    onChange: (callback: () => void) => ipcRenderer.on('downloads:changed', () => callback()),
+  });
 }

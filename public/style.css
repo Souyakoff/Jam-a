@@ -143,6 +143,38 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 
 #issues { color: var(--text-dim); }
 #issues[hidden] { display: none; }
+/* Bouton des téléchargements : pastille du nombre en cours et barre de progression */
+#downloads { position: relative; }
+#downloads.active { color: var(--accent); }
+#download-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+}
+#download-progress {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 1px;
+  background: #4a4e5a;
+  overflow: hidden;
+}
+#download-progress > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+#download-badge[hidden], #download-progress[hidden] { display: none; }
+#downloads.pulse { animation: pulse 0.6s ease-out 2; }
+@keyframes pulse { 50% { background: var(--accent); color: #000; } }
+
 /* Recherche dans la page : sous la barre d'outils (FIND_BAR_HEIGHT dans main.ts) */
 #findbar {
   position: fixed;

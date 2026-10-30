@@ -37,6 +37,8 @@ interface BrowserState {
   panelOpen: boolean;
   findOpen: boolean;
   zoom: number;
+  // progress : de 0 à 1, ou null si la taille des fichiers est inconnue
+  downloads: { active: number; progress: number | null };
   issues: Issue[];
   tabs: TabState[];
 }
@@ -53,6 +55,7 @@ declare const jama: {
   home(): void;
   toggleBookmark(): void;
   showLibrary(): void;
+  showDownloads(): void;
   toggleDevTools(): void;
   toggleResponsive(): void;
   clearSiteData(): void;
@@ -108,6 +111,8 @@ function render(state: BrowserState) {
   $('panel').hidden = !state.panelOpen;
   if (state.panelOpen) renderIssues(state.issues, current.canInspect);
 
+  renderDownloads(state.downloads);
+
   $('zoom').hidden = state.zoom === 100;
   $('zoom-level').textContent = `${state.zoom} %`;
 
@@ -115,6 +120,30 @@ function render(state: BrowserState) {
   if (findbar.hidden && state.findOpen) findCount.textContent = '';
   findbar.hidden = !state.findOpen;
   findbar.classList.toggle('with-panel', state.panelOpen);
+}
+
+// ---------- Téléchargements ----------
+
+let lastActiveDownloads = 0;
+
+function renderDownloads({ active, progress }: BrowserState['downloads']) {
+  const button = $('downloads');
+  // Un nouveau téléchargement vient de commencer : le bouton clignote pour le montrer
+  if (active > lastActiveDownloads) {
+    button.classList.remove('pulse');
+    void button.offsetWidth;
+    button.classList.add('pulse');
+  }
+  lastActiveDownloads = active;
+
+  button.classList.toggle('active', active > 0);
+  button.title = active ? `${active} téléchargement${active > 1 ? 's' : ''} en cours (Ctrl+J)` : 'Téléchargements (Ctrl+J)';
+  const badge = $('download-badge');
+  badge.hidden = active < 2;
+  badge.textContent = String(active);
+  const bar = $('download-progress');
+  bar.hidden = active === 0;
+  (bar.firstElementChild as HTMLElement).style.width = `${Math.round((progress ?? 0.1) * 100)}%`;
 }
 
 // ---------- Recherche dans la page ----------
@@ -263,6 +292,7 @@ reloadBtn.onclick = () => (current?.loading ? jama.stop() : jama.reload());
 $('home').onclick = () => jama.home();
 $('bookmark').onclick = () => jama.toggleBookmark();
 $('library').onclick = () => jama.showLibrary();
+$('downloads').onclick = () => jama.showDownloads();
 $('devtools').onclick = () => jama.toggleDevTools();
 $('responsive').onclick = () => jama.toggleResponsive();
 $('clear').onclick = () => jama.clearSiteData();

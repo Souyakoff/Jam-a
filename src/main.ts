@@ -6,10 +6,14 @@ import { setupJsonViewer } from './json-viewer';
 import * as library from './library';
 import { explain, Explanation } from './explain';
 import { showContextMenu, showEditMenu } from './context-menu';
+import * as downloads from './downloads';
 
 // Profil séparé pour les tests et le développement : JAMA_PROFILE=dossier npm start
 // (les favoris et l'historique de ton profil normal ne sont alors pas touchés)
-if (process.env.JAMA_PROFILE) app.setPath('userData', path.resolve(process.env.JAMA_PROFILE));
+if (process.env.JAMA_PROFILE) {
+  app.setPath('userData', path.resolve(process.env.JAMA_PROFILE));
+  app.setPath('downloads', path.resolve(process.env.JAMA_PROFILE, 'Telechargements'));
+}
 
 // Hauteur de la barre d'onglets + barre d'outils (doit correspondre à style.css)
 const TOOLBAR_HEIGHT = 84;
@@ -32,6 +36,7 @@ const INTERNAL_ALIASES: Record<string, string> = {
   'jama://bibliotheque': LIBRARY_PAGE,
   'jama://favoris': `${LIBRARY_PAGE}#favoris`,
   'jama://historique': `${LIBRARY_PAGE}#historique`,
+  'jama://telechargements': `${LIBRARY_PAGE}#telechargements`,
 };
 
 // Les pages internes (accueil, bibliothèque) ont accès aux favoris et à l'historique,
@@ -373,6 +378,7 @@ function sendState() {
     adblock: isAdblockReady(),
     panelOpen,
     findOpen,
+    downloads: downloads.downloadSummary(),
     zoom: active ? Math.round(viewOf(active).webContents.getZoomFactor() * 100) : 100,
     // Le détail des erreurs n'est envoyé que pour l'onglet affiché, et seulement si le panneau est ouvert
     issues: panelOpen && active ? current(active).issues : [],
@@ -439,6 +445,7 @@ function handleShortcut(event: Electron.Event, input: Input) {
   else if (ctrl && key === 'd') toggleActiveBookmark();
   else if (ctrl && key === 'h') createTab(INTERNAL_ALIASES['jama://historique']);
   else if (ctrl && input.shift && key === 'o') createTab(INTERNAL_ALIASES['jama://favoris']);
+  else if (ctrl && key === 'j') createTab(INTERNAL_ALIASES['jama://telechargements']);
   else if (ctrl && key === 'f') openFind();
   else if ((key === 'f3' || (ctrl && key === 'g')) && findOpen) find(findText, !input.shift, true);
   else if (key === 'escape' && findOpen) closeFind();
@@ -533,6 +540,7 @@ ipcMain.on('nav:stop', () => activeWc()?.stop());
 ipcMain.on('nav:home', () => goTo(''));
 ipcMain.on('bookmark:toggle', toggleActiveBookmark);
 ipcMain.on('library:show', () => createTab(INTERNAL_ALIASES['jama://favoris']));
+ipcMain.on('downloads:show', () => createTab(INTERNAL_ALIASES['jama://telechargements']));
 ipcMain.on('dev:devtools', () => activeWc()?.toggleDevTools());
 ipcMain.on('dev:responsive', toggleResponsive);
 ipcMain.on('dev:panel', togglePanel);
@@ -571,12 +579,25 @@ ipcMain.on('library:remove-bookmark', (e, url: string) => fromInternal(e) && lib
 ipcMain.on('library:remove-visit', (e, time: number) => fromInternal(e) && library.removeVisit(time));
 ipcMain.on('library:clear-history', (e) => fromInternal(e) && library.clearHistory());
 
-library.onLibraryChange(() => {
+ipcMain.handle('downloads:get', (e) => (fromInternal(e) ? downloads.getDownloads() : null));
+ipcMain.on('downloads:open', (e, id: number) => fromInternal(e) && downloads.openDownload(id, win));
+ipcMain.on('downloads:show-in-folder', (e, id: number) => fromInternal(e) && downloads.showDownloadInFolder(id));
+ipcMain.on('downloads:cancel', (e, id: number) => fromInternal(e) && downloads.cancelDownload(id));
+ipcMain.on('downloads:toggle-pause', (e, id: number) => fromInternal(e) && downloads.togglePauseDownload(id));
+ipcMain.on('downloads:remove', (e, id: number) => fromInternal(e) && downloads.removeDownload(id));
+ipcMain.on('downloads:clear', (e) => fromInternal(e) && downloads.clearFinishedDownloads());
+
+// Prévient les pages internes ouvertes qu'elles doivent se mettre à jour
+function notifyInternalPages(channel: string) {
   for (const tab of tabs.values()) {
     for (const segment of tab.segments) {
-      if (segment.internal) segment.view.webContents.send('library:changed');
+      if (segment.internal) segment.view.webContents.send(channel);
     }
   }
+}
+
+library.onLibraryChange(() => {
+  notifyInternalPages('library:changed');
   sendState();
 });
 
@@ -584,10 +605,17 @@ library.onLibraryChange(() => {
 
 app.whenReady().then(async () => {
   library.loadLibrary(app.getPath('userData'));
+  downloads.setupDownloads(session.defaultSession, app.getPath('userData'), () => {
+    notifyInternalPages('downloads:changed');
+    sendState();
+  });
   watchNetworkErrors();
   createWindow();
   await enableAdblock(session.defaultSession, app.getPath('userData'), sendState);
 });
 
-app.on('before-quit', () => library.flushLibrary());
+app.on('before-quit', () => {
+  library.flushLibrary();
+  downloads.flushDownloads();
+});
 app.on('window-all-closed', () => app.quit());

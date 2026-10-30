@@ -9,6 +9,8 @@ Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromiu
 - Onglets, barre d'adresse intelligente (adresse, `localhost:3000` ou recherche DuckDuckGo)
 - Bloqueur de pubs et de traqueurs intégré (EasyList + EasyPrivacy), avec compteur par onglet
 - Favoris (étoile dans la barre d'adresse) et historique avec recherche, stockés uniquement sur ton ordinateur
+- Téléchargements enregistrés directement dans le dossier Téléchargements, avec progression dans la barre d'outils,
+  pause, reprise, annulation et avertissement avant d'ouvrir un programme (`Ctrl+J`)
 - Visionneuse JSON : les API et fichiers `.json` s'affichent en arbre coloré et dépliable
 - Erreurs expliquées : les erreurs de la console (JavaScript, 404, CORS…) traduites en français simple, avec une
   piste pour corriger et un lien vers la doc MDN (`Ctrl+Shift+E`)
@@ -43,7 +45,8 @@ npm install
 npm start
 ```
 
-Pour tester sans toucher à tes favoris et à ton historique, utilise un profil séparé (PowerShell) :
+Pour tester sans toucher à tes favoris, ton historique et ton dossier Téléchargements, utilise un profil séparé
+(PowerShell) :
 
 ```powershell
 $env:JAMA_PROFILE = ".profil-test"; npm start
@@ -70,6 +73,7 @@ Le logo se trouve dans `build/icon.svg`. Après l'avoir modifié, régénère le
 | `Ctrl +` / `Ctrl -` / `Ctrl+0` | Zoomer / dézoomer / taille normale |
 | `Ctrl+D` | Ajouter / retirer des favoris |
 | `Ctrl+H` / `Ctrl+Shift+O` | Historique / favoris |
+| `Ctrl+J` | Téléchargements |
 | `F12` | Outils de développement |
 | `Ctrl+Shift+M` | Mode mobile |
 | `Ctrl+Shift+E` | Panneau des erreurs expliquées |
@@ -85,6 +89,7 @@ src/
   explain.ts           Explications des erreurs de console (ajoute tes règles ici !)
   icons.ts             Icônes SVG partagées par toute l'interface
   context-menu.ts      Menu du clic droit
+  downloads.ts         Téléchargements (progression, pause, historique dans downloads.json)
   preload.ts           Pont sécurisé entre l'interface et main.ts
   internal-preload.ts  Pont réservé aux pages internes (accueil, bibliothèque)
   renderer.ts          Logique de l'interface (onglets, barre d'outils)
@@ -93,7 +98,8 @@ public/
   index.html           Interface du navigateur
   style.css            Styles de l'interface
   start.html           Page d'accueil des nouveaux onglets
-  library.html         Bibliothèque : favoris et historique (jama://favoris, jama://historique)
+  library.html         Bibliothèque : favoris, historique et téléchargements
+                       (jama://favoris, jama://historique, jama://telechargements)
   pages.css            Styles des pages internes
 ```
 

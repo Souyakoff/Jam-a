@@ -101,3 +101,26 @@ h1.logo span { color: var(--accent); }
 .danger { border: none; border-radius: 8px; padding: 9px 14px; background: #4a2a30; color: #ffb3bf; }
 .danger:hover { background: #5c323a; }
 .empty { color: var(--dim); text-align: center; margin: 48px 0; }
+
+/* ---------- Téléchargements ---------- */
+.download { display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 6px; border-radius: 10px; background: var(--card); }
+.download-icon { color: var(--accent); }
+.download.cancelled .download-icon, .download.interrupted .download-icon { color: var(--dim); }
+.download-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.download-name {
+  align-self: flex-start; max-width: 100%; padding: 0; border: none; background: none;
+  color: var(--text); font-size: 14px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+button.download-name:hover { color: var(--accent); text-decoration: underline; }
+.download.cancelled .download-name, .download.interrupted .download-name { color: var(--dim); text-decoration: line-through; }
+.download-status { font-size: 12px; color: var(--dim); }
+.download-source { font-size: 11px; color: #6c6f7a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.download-bar { height: 4px; margin: 3px 0; border-radius: 2px; background: #3a3d47; overflow: hidden; }
+.download-bar span { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
+.download.paused .download-bar span { background: var(--warning); }
+.download-actions { display: flex; gap: 4px; }
+.download-action {
+  justify-content: center; width: 32px; height: 32px; border: none; border-radius: 8px;
+  background: none; color: var(--dim);
+}
+.download-action:hover { background: var(--card-hover); color: var(--text); }
