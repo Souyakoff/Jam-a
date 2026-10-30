@@ -1,7 +1,7 @@
 {
   "name": "jam-a-browser",
   "productName": "Jam-a",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Un navigateur open source, sans pub, pensé pour les devs et les débutants.",
   "main": "dist/main.js",
   "author": "Souyakoff",
@@ -41,7 +41,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.png"
@@ -55,7 +57,9 @@
       "shortcutName": "Jam-a",
       "uninstallDisplayName": "Jam<a",
       "artifactName": "Jam-a-Setup-${version}.${ext}",
-      "installerLanguages": ["fr_FR"],
+      "installerLanguages": [
+        "fr_FR"
+      ],
       "language": "1036"
     }
   },
