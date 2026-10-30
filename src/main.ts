@@ -7,6 +7,7 @@ import * as library from './library';
 import { explain, Explanation } from './explain';
 import { showContextMenu, showEditMenu } from './context-menu';
 import * as downloads from './downloads';
+import * as updater from './updater';
 
 // Profil séparé pour les tests et le développement : JAMA_PROFILE=dossier npm start
 // (les favoris et l'historique de ton profil normal ne sont alors pas touchés)
@@ -379,6 +380,7 @@ function sendState() {
     panelOpen,
     findOpen,
     downloads: downloads.downloadSummary(),
+    update: updater.getUpdateStatus(),
     zoom: active ? Math.round(viewOf(active).webContents.getZoomFactor() * 100) : 100,
     // Le détail des erreurs n'est envoyé que pour l'onglet affiché, et seulement si le panneau est ouvert
     issues: panelOpen && active ? current(active).issues : [],
@@ -541,6 +543,7 @@ ipcMain.on('nav:home', () => goTo(''));
 ipcMain.on('bookmark:toggle', toggleActiveBookmark);
 ipcMain.on('library:show', () => createTab(INTERNAL_ALIASES['jama://favoris']));
 ipcMain.on('downloads:show', () => createTab(INTERNAL_ALIASES['jama://telechargements']));
+ipcMain.on('update:install', () => updater.installUpdate());
 ipcMain.on('dev:devtools', () => activeWc()?.toggleDevTools());
 ipcMain.on('dev:responsive', toggleResponsive);
 ipcMain.on('dev:panel', togglePanel);
@@ -579,7 +582,10 @@ ipcMain.on('library:remove-bookmark', (e, url: string) => fromInternal(e) && lib
 ipcMain.on('library:remove-visit', (e, time: number) => fromInternal(e) && library.removeVisit(time));
 ipcMain.on('library:clear-history', (e) => fromInternal(e) && library.clearHistory());
 
-ipcMain.handle('downloads:get', (e) => (fromInternal(e) ? downloads.getDownloads() : null));
+ipcMain.handle('update:status', (e) => (fromInternal(e) ? updater.getUpdateStatus() : null));
+ipcMain.on('update:check', (e) => fromInternal(e) && updater.checkForUpdates());
+ipcMain.on('update:install-from-page', (e) => fromInternal(e) && updater.installUpdate());
+ipcMain.handle('downloads:get',(e) => (fromInternal(e) ? downloads.getDownloads() : null));
 ipcMain.on('downloads:open', (e, id: number) => fromInternal(e) && downloads.openDownload(id, win));
 ipcMain.on('downloads:show-in-folder', (e, id: number) => fromInternal(e) && downloads.showDownloadInFolder(id));
 ipcMain.on('downloads:cancel', (e, id: number) => fromInternal(e) && downloads.cancelDownload(id));
@@ -611,6 +617,10 @@ app.whenReady().then(async () => {
   });
   watchNetworkErrors();
   createWindow();
+  updater.setupUpdater(() => {
+    notifyInternalPages('update:changed');
+    sendState();
+  });
   await enableAdblock(session.defaultSession, app.getPath('userData'), sendState);
 });
 

@@ -1,7 +1,7 @@
 {
   "name": "jam-a-browser",
   "productName": "Jam-a",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Un navigateur open source, sans pub, pensé pour les devs et les débutants.",
   "main": "dist/main.js",
   "author": "Souyakoff",
@@ -15,7 +15,8 @@
     "start": "npm run build && electron .",
     "watch": "tsc --watch",
     "icon": "electron scripts/render-icon.js",
-    "dist": "npm run build && electron-builder --win"
+    "dist": "npm run build && electron-builder --win --publish never",
+    "release": "node scripts/release.js"
   },
   "keywords": [
     "browser",
@@ -27,6 +28,11 @@
     "appId": "io.github.souyakoff.jama",
     "productName": "Jam-a",
     "copyright": "Copyright © 2026 Jam<a contributors",
+    "publish": {
+      "provider": "github",
+      "owner": "Souyakoff",
+      "repo": "Jam-a"
+    },
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -69,6 +75,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@ghostery/adblocker-electron": "^2.20.3"
+    "@ghostery/adblocker-electron": "^2.20.3",
+    "electron-updater": "^6.8.11"
   }
 }

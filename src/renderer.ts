@@ -39,6 +39,7 @@ interface BrowserState {
   zoom: number;
   // progress : de 0 à 1, ou null si la taille des fichiers est inconnue
   downloads: { active: number; progress: number | null };
+  update: { state: string; current: string; version?: string };
   issues: Issue[];
   tabs: TabState[];
 }
@@ -56,6 +57,7 @@ declare const jama: {
   toggleBookmark(): void;
   showLibrary(): void;
   showDownloads(): void;
+  installUpdate(): void;
   toggleDevTools(): void;
   toggleResponsive(): void;
   clearSiteData(): void;
@@ -112,6 +114,11 @@ function render(state: BrowserState) {
   if (state.panelOpen) renderIssues(state.issues, current.canInspect);
 
   renderDownloads(state.downloads);
+
+  const update = $<HTMLButtonElement>('update');
+  update.hidden = state.update.state !== 'ready';
+  update.title = `La version ${state.update.version} est prête. Clique pour redémarrer Jam<a et l’installer ` +
+    '(sinon, elle s’installera à la prochaine fermeture).';
 
   $('zoom').hidden = state.zoom === 100;
   $('zoom-level').textContent = `${state.zoom} %`;
@@ -293,6 +300,7 @@ $('home').onclick = () => jama.home();
 $('bookmark').onclick = () => jama.toggleBookmark();
 $('library').onclick = () => jama.showLibrary();
 $('downloads').onclick = () => jama.showDownloads();
+$('update').onclick = () => jama.installUpdate();
 $('devtools').onclick = () => jama.toggleDevTools();
 $('responsive').onclick = () => jama.toggleResponsive();
 $('clear').onclick = () => jama.clearSiteData();

@@ -31,6 +31,10 @@ dans le menu Démarrer.
 > L'installeur n'est pas encore signé numériquement : Windows peut afficher « Windows a protégé votre ordinateur ».
 > Clique sur « Informations complémentaires » puis « Exécuter quand même ».
 
+À partir de la version 0.3.0, Jam<a **se met à jour tout seul** : il vérifie les nouvelles versions au démarrage (puis
+toutes les 4 heures), les télécharge en arrière-plan et affiche un bouton « Mettre à jour ». Si tu ne cliques pas, la
+mise à jour s'installe à la prochaine fermeture. La version actuelle est indiquée en bas de la page d'accueil.
+
 ## Lancer le projet (développement)
 
 Il faut [Node.js](https://nodejs.org/) installé.
@@ -57,6 +61,13 @@ Pour fabriquer l'installeur Windows (il apparaît dans `release/`) :
 ```bash
 npm run dist
 ```
+
+Pour publier une nouvelle version : change `version` dans `package.json`, lance `npm run dist`, puis
+`npm run release -- notes.md` (il faut [GitHub CLI](https://cli.github.com/) connecté). Le script publie l'installeur
+avec `latest.yml` et le `.blockmap` : sans ces deux fichiers, les Jam<a installés ne verraient pas la mise à jour.
+
+Pour tester une mise à jour sans GitHub, lance la version empaquetée avec `JAMA_UPDATE_URL` pointant vers un serveur
+local qui sert un `latest.yml` et l'installeur d'une version plus récente.
 
 Le logo se trouve dans `build/icon.svg`. Après l'avoir modifié, régénère les PNG avec `npm run icon`.
 
@@ -90,6 +101,7 @@ src/
   icons.ts             Icônes SVG partagées par toute l'interface
   context-menu.ts      Menu du clic droit
   downloads.ts         Téléchargements (progression, pause, historique dans downloads.json)
+  updater.ts           Mises à jour automatiques depuis les Releases GitHub
   preload.ts           Pont sécurisé entre l'interface et main.ts
   internal-preload.ts  Pont réservé aux pages internes (accueil, bibliothèque)
   renderer.ts          Logique de l'interface (onglets, barre d'outils)

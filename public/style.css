@@ -143,6 +143,11 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 
 #issues { color: var(--text-dim); }
 #issues[hidden] { display: none; }
+/* Mise à jour prête à installer */
+#update { margin-left: 4px; background: #1f3a2c; color: var(--success); font-weight: 600; }
+#toolbar #update:hover { background: #26493a; }
+#update[hidden] { display: none; }
+
 /* Bouton des téléchargements : pastille du nombre en cours et barre de progression */
 #downloads { position: relative; }
 #downloads.active { color: var(--accent); }

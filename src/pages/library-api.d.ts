@@ -15,6 +15,20 @@ declare const jamaLibrary: {
   onChange(callback: () => void): void;
 };
 
+interface UpdateStatus {
+  state: 'disabled' | 'idle' | 'checking' | 'downloading' | 'ready' | 'up-to-date' | 'error';
+  current: string;
+  version?: string;
+  progress?: number;
+}
+
+declare const jamaUpdate: {
+  status(): Promise<UpdateStatus>;
+  check(): void;
+  install(): void;
+  onChange(callback: () => void): void;
+};
+
 interface DownloadEntry {
   id: number;
   url: string;

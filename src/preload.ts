@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('jama', {
   toggleBookmark: () => ipcRenderer.send('bookmark:toggle'),
   showLibrary: () => ipcRenderer.send('library:show'),
   showDownloads: () => ipcRenderer.send('downloads:show'),
+  installUpdate: () => ipcRenderer.send('update:install'),
   toggleDevTools: () => ipcRenderer.send('dev:devtools'),
   toggleResponsive: () => ipcRenderer.send('dev:responsive'),
   clearSiteData: () => ipcRenderer.send('dev:clear-site-data'),

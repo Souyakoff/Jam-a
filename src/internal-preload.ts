@@ -13,6 +13,13 @@ if (internalPage) {
     onChange: (callback: () => void) => ipcRenderer.on('library:changed', () => callback()),
   });
 
+  contextBridge.exposeInMainWorld('jamaUpdate', {
+    status: () => ipcRenderer.invoke('update:status'),
+    check: () => ipcRenderer.send('update:check'),
+    install: () => ipcRenderer.send('update:install-from-page'),
+    onChange: (callback: () => void) => ipcRenderer.on('update:changed', () => callback()),
+  });
+
   contextBridge.exposeInMainWorld('jamaDownloads', {
     get: () => ipcRenderer.invoke('downloads:get'),
     open: (id: number) => ipcRenderer.send('downloads:open', id),

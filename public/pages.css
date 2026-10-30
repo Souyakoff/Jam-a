@@ -72,6 +72,10 @@ h1.logo span { color: var(--accent); }
 .card p, .card li { color: var(--dim); font-size: 13px; line-height: 1.7; margin: 0; }
 .card ul { padding-left: 18px; margin: 0; }
 
+.version { display: flex; align-items: center; gap: 12px; margin: -24px 0 32px; font-size: 12px; color: #6c6f7a; }
+.version button { padding: 4px 10px; border: 1px solid #3a3d47; border-radius: 6px; background: none; color: var(--dim); font-size: 12px; }
+.version button:hover { border-color: var(--accent); color: var(--text); }
+
 /* ---------- Lignes de favoris / historique ---------- */
 .entry { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 8px; }
 .entry:hover { background: var(--card); }

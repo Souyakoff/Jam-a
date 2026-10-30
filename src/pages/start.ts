@@ -27,9 +27,34 @@
     document.getElementById('recent')!.hidden = recent.length === 0;
   }
 
+  // Pied de page : version de Jam<a et état des mises à jour
+  async function renderVersion() {
+    const status = await jamaUpdate.status();
+    const text = document.getElementById('version-text')!;
+    const action = document.getElementById('version-action') as HTMLButtonElement;
+    const messages: Record<UpdateStatus['state'], string> = {
+      disabled: 'version de développement',
+      idle: '',
+      checking: 'recherche de mises à jour…',
+      downloading: `téléchargement de la ${status.version} (${Math.round((status.progress ?? 0) * 100)} %)…`,
+      ready: `la ${status.version} est prête`,
+      'up-to-date': 'à jour',
+      error: 'impossible de vérifier les mises à jour',
+    };
+    const message = messages[status.state];
+    text.textContent = `Jam<a ${status.current}${message ? ` · ${message}` : ''}`;
+
+    action.hidden = !['idle', 'up-to-date', 'error', 'ready'].includes(status.state);
+    action.textContent = status.state === 'ready' ? 'Redémarrer pour installer' : 'Rechercher des mises à jour';
+    action.onclick = () => (status.state === 'ready' ? jamaUpdate.install() : jamaUpdate.check());
+    document.getElementById('version')!.hidden = false;
+  }
+
   // Si la page est ouverte hors de Jam<a (ex. dans un autre navigateur), l'API n'existe pas
   if (typeof jamaLibrary !== 'undefined') {
     jamaLibrary.onChange(render);
     render();
+    jamaUpdate.onChange(renderVersion);
+    renderVersion();
   }
 }
