@@ -102,7 +102,7 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 #address {
   width: 100%;
   height: 32px;
-  padding: 0 36px 0 14px;
+  padding: 0 120px 0 14px;
   border: 1px solid transparent;
   border-radius: 16px;
   background: var(--bg-input);
@@ -113,18 +113,20 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 }
 #address:focus { border-color: var(--accent); }
 
-/* Étoile des favoris, dans la barre d'adresse */
-#bookmark {
+/* Zoom et étoile des favoris, à droite dans la barre d'adresse */
+#address-actions {
   position: absolute;
   top: 3px;
   right: 4px;
-  width: 26px;
-  height: 26px;
-  border-radius: 13px;
-  color: var(--text-dim);
+  display: flex;
+  gap: 2px;
 }
-#bookmark:hover { color: var(--text); }
-#bookmark.on, #bookmark.on:hover { color: var(--warning); }
+#address-actions button { height: 26px; border-radius: 13px; color: var(--text-dim); }
+#address-actions button:hover { background: var(--bg-tab-active); color: var(--text); }
+#zoom { padding: 0 9px; font-size: 12px; gap: 5px; }
+#zoom[hidden] { display: none; }
+#bookmark { width: 26px; }
+#address-actions #bookmark.on, #address-actions #bookmark.on:hover { color: var(--warning); }
 #bookmark.on svg { fill: currentColor; }
 #bookmark[hidden] { display: none; }
 
@@ -141,6 +143,39 @@ button:disabled { color: var(--text-dim); opacity: 0.4; cursor: default; }
 
 #issues { color: var(--text-dim); }
 #issues[hidden] { display: none; }
+/* Recherche dans la page : sous la barre d'outils (FIND_BAR_HEIGHT dans main.ts) */
+#findbar {
+  position: fixed;
+  top: 84px;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 14px;
+  background: var(--bg-tab);
+  border-bottom: 1px solid var(--bg-tab-active);
+  color: var(--text-dim);
+}
+#findbar[hidden] { display: none; }
+#findbar.with-panel { right: 380px; }
+#find-input {
+  width: 320px;
+  height: 30px;
+  margin-left: 6px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+#find-input:focus { border-color: var(--accent); }
+#find-input.not-found { border-color: var(--error); }
+#find-count { min-width: 90px; padding: 0 8px; font-size: 12px; }
+
 #issues.active, #issues.active:hover { background: var(--accent); color: #000; }
 #issues.has-errors { background: #4a2a30; color: #ffb3bf; }
 #issues.has-errors:hover { background: #5c323a; }

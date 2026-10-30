@@ -19,6 +19,15 @@ contextBridge.exposeInMainWorld('jama', {
   togglePanel: () => ipcRenderer.send('dev:panel'),
   clearIssues: () => ipcRenderer.send('dev:clear-issues'),
   openUrl: (url: string) => ipcRenderer.send('tab:open-url', url),
+  openFind: () => ipcRenderer.send('find:open'),
+  closeFind: () => ipcRenderer.send('find:close'),
+  find: (text: string, forward: boolean, findNext: boolean) => ipcRenderer.send('find:query', text, forward, findNext),
+  zoomIn: () => ipcRenderer.send('zoom:in'),
+  zoomOut: () => ipcRenderer.send('zoom:out'),
+  resetZoom: () => ipcRenderer.send('zoom:reset'),
+  onFindResult: (callback: (result: { active: number; total: number }) => void) =>
+    ipcRenderer.on('find-result', (_e, result) => callback(result)),
+  onFocusFind: (callback: () => void) => ipcRenderer.on('focus-find', () => callback()),
   onState: (callback: (state: unknown) => void) =>
     ipcRenderer.on('state', (_e, state) => callback(state)),
   onFocusAddress: (callback: () => void) => ipcRenderer.on('focus-address', () => callback()),

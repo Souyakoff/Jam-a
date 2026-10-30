@@ -12,6 +12,9 @@ Jam&lt;a utilise [Electron](https://www.electronjs.org/) (donc le moteur Chromiu
 - Visionneuse JSON : les API et fichiers `.json` s'affichent en arbre coloré et dépliable
 - Erreurs expliquées : les erreurs de la console (JavaScript, 404, CORS…) traduites en français simple, avec une
   piste pour corriger et un lien vers la doc MDN (`Ctrl+Shift+E`)
+- Menu clic droit : ouvrir un lien dans un nouvel onglet, copier, rechercher la sélection, voir le code source,
+  inspecter l'élément
+- Recherche dans la page (`Ctrl+F`) et zoom (`Ctrl +` / `Ctrl -` / `Ctrl+molette`) avec indicateur
 - Outils de développement en un clic (`F12`)
 - Mode mobile pour tester le responsive (`Ctrl+Shift+M`)
 - Bouton pour vider le cache et les cookies du site ouvert
@@ -63,6 +66,8 @@ Le logo se trouve dans `build/icon.svg`. Après l'avoir modifié, régénère le
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | Onglet suivant / précédent |
 | `Ctrl+R` ou `F5` | Recharger |
 | `Alt+←` / `Alt+→` | Précédent / suivant |
+| `Ctrl+F` | Rechercher dans la page (`Entrée` / `F3` : suivant, `Maj+Entrée` : précédent) |
+| `Ctrl +` / `Ctrl -` / `Ctrl+0` | Zoomer / dézoomer / taille normale |
 | `Ctrl+D` | Ajouter / retirer des favoris |
 | `Ctrl+H` / `Ctrl+Shift+O` | Historique / favoris |
 | `F12` | Outils de développement |
@@ -79,6 +84,7 @@ src/
   library.ts           Favoris et historique (fichiers JSON dans le dossier de l'utilisateur)
   explain.ts           Explications des erreurs de console (ajoute tes règles ici !)
   icons.ts             Icônes SVG partagées par toute l'interface
+  context-menu.ts      Menu du clic droit
   preload.ts           Pont sécurisé entre l'interface et main.ts
   internal-preload.ts  Pont réservé aux pages internes (accueil, bibliothèque)
   renderer.ts          Logique de l'interface (onglets, barre d'outils)

@@ -24,7 +24,12 @@
     <form id="address-form">
       <input id="address" type="text" spellcheck="false" autocomplete="off"
              placeholder="Rechercher ou saisir une adresse (Ctrl+L)">
-      <button id="bookmark" type="button" title="Ajouter aux favoris (Ctrl+D)"><i data-icon="star"></i></button>
+      <div id="address-actions">
+        <button id="zoom" type="button" title="Réinitialiser le zoom (Ctrl+0)" hidden>
+          <i data-icon="zoom-in" data-size="14"></i><span id="zoom-level">100 %</span>
+        </button>
+        <button id="bookmark" type="button" title="Ajouter aux favoris (Ctrl+D)"><i data-icon="star"></i></button>
+      </div>
     </form>
 
     <span id="shield" class="status" title="Pubs et traqueurs bloqués sur cet onglet">
@@ -38,6 +43,15 @@
     <button id="responsive" class="icon" title="Mode mobile (Ctrl+Shift+M)"><i data-icon="smartphone"></i></button>
     <button id="clear" class="icon" title="Vider le cache et les cookies de ce site"><i data-icon="eraser"></i></button>
     <button id="devtools" class="icon" title="Outils de développement (F12)"><i data-icon="code"></i></button>
+  </div>
+
+  <div id="findbar" hidden>
+    <i data-icon="search"></i>
+    <input id="find-input" type="text" spellcheck="false" autocomplete="off" placeholder="Rechercher dans la page">
+    <span id="find-count"></span>
+    <button id="find-prev" class="icon" title="Précédent (Maj+Entrée)"><i data-icon="chevron-up"></i></button>
+    <button id="find-next" class="icon" title="Suivant (Entrée)"><i data-icon="chevron-down"></i></button>
+    <button id="find-close" class="icon" title="Fermer (Échap)"><i data-icon="x"></i></button>
   </div>
 
   <aside id="panel" hidden>

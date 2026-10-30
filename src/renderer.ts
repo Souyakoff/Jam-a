@@ -35,6 +35,8 @@ interface BrowserState {
   responsive: boolean;
   adblock: boolean;
   panelOpen: boolean;
+  findOpen: boolean;
+  zoom: number;
   issues: Issue[];
   tabs: TabState[];
 }
@@ -57,6 +59,14 @@ declare const jama: {
   togglePanel(): void;
   clearIssues(): void;
   openUrl(url: string): void;
+  openFind(): void;
+  closeFind(): void;
+  find(text: string, forward: boolean, findNext: boolean): void;
+  zoomIn(): void;
+  zoomOut(): void;
+  resetZoom(): void;
+  onFindResult(callback: (result: { active: number; total: number }) => void): void;
+  onFocusFind(callback: () => void): void;
   onState(callback: (state: BrowserState) => void): void;
   onFocusAddress(callback: () => void): void;
 };
@@ -97,7 +107,41 @@ function render(state: BrowserState) {
   $('issue-count').textContent = String(current.errors);
   $('panel').hidden = !state.panelOpen;
   if (state.panelOpen) renderIssues(state.issues, current.canInspect);
+
+  $('zoom').hidden = state.zoom === 100;
+  $('zoom-level').textContent = `${state.zoom} %`;
+
+  const findbar = $('findbar');
+  if (findbar.hidden && state.findOpen) findCount.textContent = '';
+  findbar.hidden = !state.findOpen;
+  findbar.classList.toggle('with-panel', state.panelOpen);
 }
+
+// ---------- Recherche dans la page ----------
+
+const findInput = $<HTMLInputElement>('find-input');
+const findCount = $('find-count');
+
+findInput.oninput = () => jama.find(findInput.value, true, false);
+findInput.onkeydown = (e) => {
+  if (e.key === 'Enter') jama.find(findInput.value, !e.shiftKey, true);
+  else if (e.key === 'Escape') jama.closeFind();
+};
+$('find-next').onclick = () => jama.find(findInput.value, true, true);
+$('find-prev').onclick = () => jama.find(findInput.value, false, true);
+$('find-close').onclick = () => jama.closeFind();
+
+jama.onFocusFind(() => {
+  findInput.focus();
+  findInput.select();
+});
+jama.onFindResult(({ active, total }) => {
+  const empty = !findInput.value;
+  findCount.textContent = empty ? '' : total ? `${active} sur ${total}` : 'Aucun résultat';
+  findInput.classList.toggle('not-found', !empty && total === 0);
+  // La recherche peut donner le focus à la page : on le rend au champ si l'utilisateur tapait
+  if (document.activeElement !== findInput && !$('findbar').hidden) findInput.focus();
+});
 
 // ---------- Panneau des erreurs ----------
 
@@ -222,6 +266,7 @@ $('library').onclick = () => jama.showLibrary();
 $('devtools').onclick = () => jama.toggleDevTools();
 $('responsive').onclick = () => jama.toggleResponsive();
 $('clear').onclick = () => jama.clearSiteData();
+$('zoom').onclick = () => jama.resetZoom();
 $('issues').onclick = () => jama.togglePanel();
 $('panel-close').onclick = () => jama.togglePanel();
 $('panel-console').onclick = () => jama.toggleDevTools();

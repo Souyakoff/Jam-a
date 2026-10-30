@@ -5,6 +5,7 @@ import { enableAdblock, blockedCount, isAdblockReady } from './adblock';
 import { setupJsonViewer } from './json-viewer';
 import * as library from './library';
 import { explain, Explanation } from './explain';
+import { showContextMenu, showEditMenu } from './context-menu';
 
 // Profil séparé pour les tests et le développement : JAMA_PROFILE=dossier npm start
 // (les favoris et l'historique de ton profil normal ne sont alors pas touchés)
@@ -21,6 +22,10 @@ const MAX_SEGMENTS = 6;
 // Largeur du panneau des erreurs (doit correspondre à #panel dans style.css)
 const PANEL_WIDTH = 380;
 const MAX_ISSUES = 100;
+// Hauteur de la barre de recherche dans la page (doit correspondre à #findbar dans style.css)
+const FIND_BAR_HEIGHT = 44;
+// Paliers de zoom, comme dans Chrome
+const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
 
 // Raccourcis tapables dans la barre d'adresse pour les pages internes
 const INTERNAL_ALIASES: Record<string, string> = {
@@ -65,6 +70,8 @@ let activeId: number | null = null;
 let nextId = 1;
 let responsive = false;
 let panelOpen = false;
+let findOpen = false;
+let findText = '';
 
 function createWindow() {
   win = new BrowserWindow({
@@ -83,6 +90,7 @@ function createWindow() {
   win.setMenu(null);
   win.loadFile(path.join(__dirname, '../public/index.html'));
   win.webContents.on('before-input-event', handleShortcut);
+  win.webContents.on('context-menu', (_e, params) => showEditMenu(params));
   win.on('resize', layout);
   // Boutons « précédent / suivant » de la souris
   win.on('app-command', (_e, command) => {
@@ -167,6 +175,21 @@ function createSegment(tab: Tab, internal: boolean): Segment {
     addIssue(segment, level, message, sourceId, lineNumber);
   });
   wc.on('before-input-event', handleShortcut);
+  wc.on('context-menu', (_e, params) => showContextMenu(wc, params, {
+    openInNewTab: (url) => createTab(url),
+    search: (text) => createTab(SEARCH_URL + encodeURIComponent(text)),
+    goBack: () => goBack(tab),
+    goForward: () => goForward(tab),
+    canGoBack: () => canGoBack(tab),
+    canGoForward: () => canGoForward(tab),
+  }));
+  wc.on('found-in-page', (_e, { activeMatchOrdinal, matches }) => {
+    if (activeTab() === tab && current(tab) === segment) {
+      win.webContents.send('find-result', { active: activeMatchOrdinal, total: matches });
+    }
+  });
+  // Ctrl+molette : la page demande un zoom, on applique les mêmes paliers que Ctrl +/-
+  wc.on('zoom-changed', (_e, direction) => changeZoom(wc, direction === 'in' ? 1 : -1));
   // Un lien vers un site depuis une page interne (ou l'inverse) change de type de vue
   wc.on('will-navigate', (event) => {
     if (isInternal(event.url) !== internal) {
@@ -279,8 +302,11 @@ function goForward(tab: Tab) {
 function activateTab(id: number) {
   const tab = tabs.get(id);
   if (!tab) return;
+  // La recherche dans la page suit l'onglet affiché
+  if (findOpen) activeWc()?.stopFindInPage('clearSelection');
   activeId = id;
   for (const t of tabs.values()) viewOf(t).setVisible(t.id === id);
+  if (findOpen) find(findText, true, false);
   layout();
   sendState();
 }
@@ -317,12 +343,14 @@ function layout() {
   const bounds = win.getContentBounds();
   // Le panneau des erreurs prend la droite de la fenêtre, la page se rétrécit
   const width = Math.max(0, bounds.width - (panelOpen ? PANEL_WIDTH : 0));
-  const viewHeight = Math.max(0, bounds.height - TOOLBAR_HEIGHT);
+  // La barre de recherche (Ctrl+F) s'insère entre la barre d'outils et la page
+  const top = TOOLBAR_HEIGHT + (findOpen ? FIND_BAR_HEIGHT : 0);
+  const viewHeight = Math.max(0, bounds.height - top);
   if (responsive && width > RESPONSIVE_WIDTH) {
     const x = Math.round((width - RESPONSIVE_WIDTH) / 2);
-    viewOf(tab).setBounds({ x, y: TOOLBAR_HEIGHT, width: RESPONSIVE_WIDTH, height: viewHeight });
+    viewOf(tab).setBounds({ x, y: top, width: RESPONSIVE_WIDTH, height: viewHeight });
   } else {
-    viewOf(tab).setBounds({ x: 0, y: TOOLBAR_HEIGHT, width, height: viewHeight });
+    viewOf(tab).setBounds({ x: 0, y: top, width, height: viewHeight });
   }
 }
 
@@ -344,6 +372,8 @@ function sendState() {
     responsive,
     adblock: isAdblockReady(),
     panelOpen,
+    findOpen,
+    zoom: active ? Math.round(viewOf(active).webContents.getZoomFactor() * 100) : 100,
     // Le détail des erreurs n'est envoyé que pour l'onglet affiché, et seulement si le panneau est ouvert
     issues: panelOpen && active ? current(active).issues : [],
     tabs: [...tabs.values()].map((t) => {
@@ -375,7 +405,7 @@ function toUrl(input: string): string {
   const text = input.trim();
   if (!text) return START_PAGE;
   if (INTERNAL_ALIASES[text.toLowerCase()]) return INTERNAL_ALIASES[text.toLowerCase()];
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text) || text.startsWith('about:')) return text;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text) || /^(about|view-source):/i.test(text)) return text;
   if (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/.*)?$/i.test(text)) return `http://${text}`;
   if (/^[^\s]+\.[a-z]{2,}(:\d+)?(\/.*)?$/i.test(text)) return `https://${text}`;
   return SEARCH_URL + encodeURIComponent(text);
@@ -409,6 +439,12 @@ function handleShortcut(event: Electron.Event, input: Input) {
   else if (ctrl && key === 'd') toggleActiveBookmark();
   else if (ctrl && key === 'h') createTab(INTERNAL_ALIASES['jama://historique']);
   else if (ctrl && input.shift && key === 'o') createTab(INTERNAL_ALIASES['jama://favoris']);
+  else if (ctrl && key === 'f') openFind();
+  else if ((key === 'f3' || (ctrl && key === 'g')) && findOpen) find(findText, !input.shift, true);
+  else if (key === 'escape' && findOpen) closeFind();
+  else if (ctrl && (key === '=' || key === '+')) wc && changeZoom(wc, 1);
+  else if (ctrl && key === '-') wc && changeZoom(wc, -1);
+  else if (ctrl && key === '0') wc && resetZoom(wc);
   else if (input.alt && key === 'arrowleft') tab && goBack(tab);
   else if (input.alt && key === 'arrowright') tab && goForward(tab);
   else handled = false;
@@ -425,6 +461,53 @@ function toggleResponsive() {
 function togglePanel() {
   panelOpen = !panelOpen;
   layout();
+  sendState();
+}
+
+// ---------- Recherche dans la page ----------
+
+function openFind() {
+  findOpen = true;
+  layout();
+  sendState();
+  win.webContents.focus();
+  win.webContents.send('focus-find');
+}
+
+function closeFind() {
+  findOpen = false;
+  activeWc()?.stopFindInPage('keepSelection');
+  layout();
+  sendState();
+  activeWc()?.focus();
+}
+
+function find(text: string, forward: boolean, findNext: boolean) {
+  findText = text;
+  const wc = activeWc();
+  if (!wc) return;
+  if (!text) {
+    wc.stopFindInPage('clearSelection');
+    win.webContents.send('find-result', { active: 0, total: 0 });
+    return;
+  }
+  wc.findInPage(text, { forward, findNext });
+}
+
+// ---------- Zoom ----------
+
+function changeZoom(wc: Electron.WebContents, direction: 1 | -1) {
+  const factor = wc.getZoomFactor();
+  // Palier suivant (ou précédent) par rapport au zoom actuel
+  const next = direction > 0
+    ? ZOOM_STEPS.find((step) => step > factor + 0.001)
+    : [...ZOOM_STEPS].reverse().find((step) => step < factor - 0.001);
+  if (next) wc.setZoomFactor(next);
+  sendState();
+}
+
+function resetZoom(wc: Electron.WebContents) {
+  wc.setZoomFactor(1);
   sendState();
 }
 
@@ -458,6 +541,12 @@ ipcMain.on('dev:clear-issues', () => {
   if (tab) current(tab).issues = [];
   sendState();
 });
+ipcMain.on('find:open', openFind);
+ipcMain.on('find:close', closeFind);
+ipcMain.on('find:query', (_e, text: string, forward: boolean, findNext: boolean) => find(text, forward, findNext));
+ipcMain.on('zoom:in', () => { const wc = activeWc(); if (wc) changeZoom(wc, 1); });
+ipcMain.on('zoom:out', () => { const wc = activeWc(); if (wc) changeZoom(wc, -1); });
+ipcMain.on('zoom:reset', () => { const wc = activeWc(); if (wc) resetZoom(wc); });
 ipcMain.on('tab:open-url', (_e, url: string) => {
   if (/^https:\/\//.test(url)) createTab(url);
 });
